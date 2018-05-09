@@ -11,6 +11,7 @@ import datetime
 import time
 import os
 from PIL import Image
+import csv
 
 ################
 # Load images from Folder
@@ -182,93 +183,48 @@ def point_to_line_dist(m, c, x0, y0):
     return dist
 
 
-##############################################################################
-#                           Main script starts here                          #
-##############################################################################
-
-#filename = 'project_data/a/000224.png'
-folder = 'project_data/a/'
-newfolder = 'project_data/a_solution/'
-edgefolder = 'project_data/a_edges/'
-#filename = 'project_data/b/001319.png'
-folder = 'project_data/b/'
-newfolder = 'project_data/b_solution/'
-edgefolder = 'project_data/b_edges/'
-
-ransac_iterations = 100
-ransac_threshold = 2
-n_samples = 2
-
-ratio = 0
-i = -4
-
-previous_m, previous_c = 0, 0
-
-# Load the images and sort the paths to the sequenced names
-filenames = imagesfilename_from_folder(folder)
-filenames = np.sort(filenames)
-#print(filenames)
-
-# timestamp start
-ts1 = time.time()
-st = datetime.datetime.fromtimestamp(ts1).strftime('%Y-%m-%d %H:%M:%S')
-print(st)
-
-for ind, filename in enumerate(filenames):
-    #filename = filenames[0]
-    print(filename)
-    name, filetype = filename[:i], filename[i:]
-    newfilename = str(name)+"_solution"+str(filetype)
-    # print(""+str(name)+":::"+newfilename)
-
-    filepath = os.path.join(folder,filename)
-    newfilepath = os.path.join(newfolder, newfilename)
-    edgefilepath = os.path.join(edgefolder, filename)
-
-    image = plt.imread(filepath)
-    edges = edge_map(image)
-    #image = Image.open(filepath).convert('LA') # greyscale convertion
-
-
-
+def detecingEyeCenterAndSize(image, edges):
     # detecing eyeCenter and size
     xMin, xMax, yMin, yMax = min_max_eye(edges)
-    xEyeCenter, yEyeCenter = 348 , 191 # Center on first image of set A
+    xEyeCenter, yEyeCenter = 348, 191  # Center on first image of set A
 
-    yEyeCenter = (xMax+xMin)/2
-    xEyeCenter = (yMax+yMin)/2
+    yEyeCenter = (xMax + xMin) / 2
+    xEyeCenter = (yMax + yMin) / 2
 
-    if (xMax-xMin) > (yMax-yMin):
-        xEyeSize = (xMax-xMin)/2
+    if (xMax - xMin) > (yMax - yMin):
+        xEyeSize = (xMax - xMin) / 2
     else:
-        xEyeSize = (yMax-yMin)/2
+        xEyeSize = (yMax - yMin) / 2
 
-    #print("xmin:"+str(xMin)+"--"+str(xMax)+": ymin:"+str(yMin)+"--"+str(yMax))
+    # print("xmin:"+str(xMin)+"--"+str(xMax)+": ymin:"+str(yMin)+"--"+str(yMax))
     # end of detecing eyeCenter and size
 
-    edgesAroundEye = edges[xMin:xMax,yMin:yMax]
+    edgesAroundEye = edges[xMin:xMax, yMin:yMax]
 
-    #f1 = plt.figure()
-    #plt.imshow(edges)
-    #f1.savefig(edgefilepath, dpi=90, bbox_inches='tight')
+    # f1 = plt.figure()
+    # plt.imshow(edges)
+    # f1.savefig(edgefilepath, dpi=90, bbox_inches='tight')
 
-    #plt.title('edge map')
-    #f1.show()
+    # plt.title('edge map')
+    # f1.show()
 
-    #plt.axis('off')
-    #plt.show()
-
+    # plt.axis('off')
+    # plt.show()
 
     edge_pts = np.array(np.nonzero(edgesAroundEye), dtype=float).T
     edge_pts_xy = edge_pts[:, ::-1]
 
+    return edge_pts, edge_pts_xy, xEyeCenter, yEyeCenter, xEyeSize
 
+
+def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio):
     # perform RANSAC iterations
+    global model_c
     for it in range(ransac_iterations):
 
         # this shows progress
         sys.stdout.write('\r')
-        sys.stdout.write('iteration {}/{}'.format(it+1, ransac_iterations))
+        sys.stdout.write('iteration {}/{}'.format(it + 1, ransac_iterations))
         sys.stdout.flush()
 
         all_indices = np.arange(edge_pts.shape[0])
@@ -305,6 +261,66 @@ for ind, filename in enumerate(filenames):
             ratio = num / float(n_samples)
             model_m = m
             model_c = c
+
+    return model_m, model_c
+
+##############################################################################
+#                           Main script starts here                          #
+##############################################################################
+
+#filename = 'project_data/a/000224.png'
+folder = 'project_data/a/'
+newfolder = 'project_data/a_solution/'
+edgefolder = 'project_data/a_edges/'
+#filename = 'project_data/b/001319.png'
+folder = 'project_data/b/'
+newfolder = 'project_data/b_solution/'
+edgefolder = 'project_data/b_edges/'
+
+xySolutions = []
+
+ransac_iterations = 100
+ransac_threshold = 2
+n_samples = 2
+
+ratio = 0
+i = -4
+
+previous_m, previous_c = 0, 0
+
+# Load the images and sort the paths to the sequenced names
+filenames = imagesfilename_from_folder(folder)
+filenames = np.sort(filenames)
+#print(filenames)
+
+# timestamp start
+ts1 = time.time()
+st = datetime.datetime.fromtimestamp(ts1).strftime('%Y-%m-%d %H:%M:%S')
+print(st)
+
+# for ind, filename in enumerate(filenames): # loop through all images in folder
+for x in range(0, 3): # loop only first 3
+    filename = filenames[x]
+    #filename = filenames[0]
+    print(filename)
+    name, filetype = filename[:i], filename[i:]
+    newfilename = str(name)+"_solution"+str(filetype)
+    # print(""+str(name)+":::"+newfilename)
+
+    filepath = os.path.join(folder,filename)
+    newfilepath = os.path.join(newfolder, newfilename)
+    edgefilepath = os.path.join(edgefolder, filename)
+
+    image = plt.imread(filepath)
+    edges = edge_map(image)
+    #image = Image.open(filepath).convert('LA') # greyscale convertion
+
+    edge_pts, edge_pts_xy, xEyeCenter, yEyeCenter, xEyeSize = detecingEyeCenterAndSize(image, edges)
+
+    model_m, model_c = performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio)
+
+    m = model_m
+    c = model_c
 
     sys.stdout.write('\r')
     ts = time.time()
@@ -350,10 +366,17 @@ for ind, filename in enumerate(filenames):
     )
     plt.plot([xSolution], [ySolution], marker='o', markersize=5, color="red")
 
+    xySolutions.append([str(xSolution),str(ySolution)])
+
     f2.show()
     f2.savefig(newfilepath, dpi=90, bbox_inches='tight')
 
     plt.close()
+
+b = open(newfolder+'solutions.csv', 'w')
+a = csv.writer(b)
+a.writerows(xySolutions)
+b.close()
 
 #plt.axis('off')
 #plt.show()

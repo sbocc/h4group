@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a79b49b8-db30-4cbb-84a6-d1617ea22235" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hw4_group.py" beforeDir="false" afterPath="$PROJECT_DIR$/hw4_group.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,8 +16,8 @@
       <file leaf-file-name="hw4_group.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hw4_group.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="218">
-              <caret line="324" column="4" selection-start-line="324" selection-start-column="4" selection-end-line="324" selection-end-column="4" />
+            <state relative-caret-position="316">
+              <caret line="374" lean-forward="true" selection-start-line="374" selection-end-line="374" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -287,8 +286,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hw4_group.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="324" column="4" selection-start-line="324" selection-start-column="4" selection-end-line="324" selection-end-column="4" />
+        <state relative-caret-position="316">
+          <caret line="374" lean-forward="true" selection-start-line="374" selection-end-line="374" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
