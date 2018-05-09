@@ -214,146 +214,146 @@ ts1 = time.time()
 st = datetime.datetime.fromtimestamp(ts1).strftime('%Y-%m-%d %H:%M:%S')
 print(st)
 
-#for ind, filename in enumerate(filenames):
-filename = filenames[0]
-print(filename)
-name, filetype = filename[:i], filename[i:]
-newfilename = str(name)+"_solution"+str(filetype)
-# print(""+str(name)+":::"+newfilename)
+for ind, filename in enumerate(filenames):
+    #filename = filenames[0]
+    print(filename)
+    name, filetype = filename[:i], filename[i:]
+    newfilename = str(name)+"_solution"+str(filetype)
+    # print(""+str(name)+":::"+newfilename)
 
-filepath = os.path.join(folder,filename)
-newfilepath = os.path.join(newfolder, newfilename)
-edgefilepath = os.path.join(edgefolder, filename)
+    filepath = os.path.join(folder,filename)
+    newfilepath = os.path.join(newfolder, newfilename)
+    edgefilepath = os.path.join(edgefolder, filename)
 
-image = plt.imread(filepath)
-edges = edge_map(image)
-#image = Image.open(filepath).convert('LA')
-
-
-
-# detecing eyeCenter and size
-xMin, xMax, yMin, yMax = min_max_eye(edges)
-xEyeCenter, yEyeCenter = 348 , 191 # Center on first image of set A
-
-yEyeCenter = (xMax+xMin)/2
-xEyeCenter = (yMax+yMin)/2
-
-if (xMax-xMin) > (yMax-yMin):
-    xEyeSize = (xMax-xMin)/2
-else:
-    xEyeSize = (yMax-yMin)/2
-
-#print("xmin:"+str(xMin)+"--"+str(xMax)+": ymin:"+str(yMin)+"--"+str(yMax))
-# end of detecing eyeCenter and size
-
-edgesAroundEye = edges[xMin:xMax,yMin:yMax]
-
-f1 = plt.figure()
-plt.imshow(edges)
-#f1.savefig(edgefilepath, dpi=90, bbox_inches='tight')
-
-plt.title('edge map')
-f1.show()
-
-plt.axis('off')
-plt.show()
+    image = plt.imread(filepath)
+    edges = edge_map(image)
+    #image = Image.open(filepath).convert('LA') # greyscale convertion
 
 
-edge_pts = np.array(np.nonzero(edgesAroundEye), dtype=float).T
-edge_pts_xy = edge_pts[:, ::-1]
+
+    # detecing eyeCenter and size
+    xMin, xMax, yMin, yMax = min_max_eye(edges)
+    xEyeCenter, yEyeCenter = 348 , 191 # Center on first image of set A
+
+    yEyeCenter = (xMax+xMin)/2
+    xEyeCenter = (yMax+yMin)/2
+
+    if (xMax-xMin) > (yMax-yMin):
+        xEyeSize = (xMax-xMin)/2
+    else:
+        xEyeSize = (yMax-yMin)/2
+
+    #print("xmin:"+str(xMin)+"--"+str(xMax)+": ymin:"+str(yMin)+"--"+str(yMax))
+    # end of detecing eyeCenter and size
+
+    edgesAroundEye = edges[xMin:xMax,yMin:yMax]
+
+    #f1 = plt.figure()
+    #plt.imshow(edges)
+    #f1.savefig(edgefilepath, dpi=90, bbox_inches='tight')
+
+    #plt.title('edge map')
+    #f1.show()
+
+    #plt.axis('off')
+    #plt.show()
 
 
-# perform RANSAC iterations
-for it in range(ransac_iterations):
+    edge_pts = np.array(np.nonzero(edgesAroundEye), dtype=float).T
+    edge_pts_xy = edge_pts[:, ::-1]
 
-    # this shows progress
+
+    # perform RANSAC iterations
+    for it in range(ransac_iterations):
+
+        # this shows progress
+        sys.stdout.write('\r')
+        sys.stdout.write('iteration {}/{}'.format(it+1, ransac_iterations))
+        sys.stdout.flush()
+
+        all_indices = np.arange(edge_pts.shape[0])
+        np.random.shuffle(all_indices)
+
+        indices_1 = all_indices[:n_samples]
+        indices_2 = all_indices[n_samples:]
+
+        maybe_points = edge_pts_xy[indices_1, :]
+        test_points = edge_pts_xy[indices_2, :]
+
+        # find a line model for these points
+        m, c = fit_line(maybe_points)
+
+        x_list = []
+        y_list = []
+        num = 0
+
+        # find distance to the model for all testing points
+        for ind in range(test_points.shape[0]):
+
+            x0 = test_points[ind, 0]
+            y0 = test_points[ind, 1]
+
+            # distance from point to the model
+            dist = point_to_line_dist(m, c, x0, y0)
+
+            # check whether it's an inlier or not
+            if dist < ransac_threshold:
+                num += 1
+
+        # in case a new model is better - cache it
+        if num / float(n_samples) > ratio:
+            ratio = num / float(n_samples)
+            model_m = m
+            model_c = c
+
     sys.stdout.write('\r')
-    sys.stdout.write('iteration {}/{}'.format(it+1, ransac_iterations))
-    sys.stdout.flush()
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    print(st)
 
-    all_indices = np.arange(edge_pts.shape[0])
-    np.random.shuffle(all_indices)
+    x = np.arange(image.shape[1])
+    y = model_m * x + model_c
 
-    indices_1 = all_indices[:n_samples]
-    indices_2 = all_indices[n_samples:]
+    print("m="+str(model_m)+"+c="+str(model_c)+"---Diff from previous m="+str(model_m-previous_m))
+    previous_m, previous_c = model_m, model_c
 
-    maybe_points = edge_pts_xy[indices_1, :]
-    test_points = edge_pts_xy[indices_2, :]
+    f2 = plt.figure()
 
-    # find a line model for these points
-    m, c = fit_line(maybe_points)
+    if m != 0 or c != 0:
+        plt.plot(x, y, 'r')
 
-    x_list = []
-    y_list = []
-    num = 0
+    plt.imshow(image)
 
-    # find distance to the model for all testing points
-    for ind in range(test_points.shape[0]):
-
-        x0 = test_points[ind, 0]
-        y0 = test_points[ind, 1]
-
-        # distance from point to the model
-        dist = point_to_line_dist(m, c, x0, y0)
-
-        # check whether it's an inlier or not
-        if dist < ransac_threshold:
-            num += 1
-
-    # in case a new model is better - cache it
-    if num / float(n_samples) > ratio:
-        ratio = num / float(n_samples)
-        model_m = m
-        model_c = c
-
-sys.stdout.write('\r')
-ts = time.time()
-st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-print(st)
-
-x = np.arange(image.shape[1])
-y = model_m * x + model_c
-
-print("m="+str(model_m)+"+c="+str(model_c)+"---Diff from previous m="+str(model_m-previous_m))
-previous_m, previous_c = model_m, model_c
-
-f2 = plt.figure()
-
-#if m != 0 or c != 0:
-#    plt.plot(x, y, 'r')
-
-# plt.imshow(image)
-
-xSolution, ySolution = 348 , 191 # 255, 140
-h, w = 80, 80
-n_plots = 1
-ax1 = plt.subplot(n_plots, n_plots, 1)
-ax1.add_patch(
-    plt.Rectangle(
-        (xSolution-w/2, ySolution-h/2),   # (x,y)
-        w,          # width
-        h,          # height
-        edgecolor = 'red', # none
-        facecolor="#00ffff",
-        alpha=0.2
+    xSolution, ySolution = 348 , 191 # 255, 140
+    h, w = 80, 80
+    n_plots = 1
+    ax1 = plt.subplot(n_plots, n_plots, 1)
+    ax1.add_patch(
+        plt.Rectangle(
+            (xSolution-w/2, ySolution-h/2),   # (x,y)
+            w,          # width
+            h,          # height
+            edgecolor = 'red', # none
+            facecolor="#00ffff",
+            alpha=0.2
+        )
     )
-)
 
-print("xEyeCenter:"+str(xEyeCenter)+"-yEyeCenter-"+str(yEyeCenter)+": xEyeSize:"+str(xEyeSize))
+    print("xEyeCenter:"+str(xEyeCenter)+"-yEyeCenter-"+str(yEyeCenter)+": xEyeSize:"+str(xEyeSize))
 
-ax1.add_patch(
-    plt.Circle((xEyeCenter, yEyeCenter), radius= xEyeSize,
-               edgecolor = 'red',
-               facecolor="#00ccff",
-               alpha=0.3
-               )
-)
-plt.plot([xSolution], [ySolution], marker='o', markersize=5, color="red")
+    ax1.add_patch(
+        plt.Circle((xEyeCenter, yEyeCenter), radius= xEyeSize,
+                   edgecolor = 'red',
+                   facecolor="#00ccff",
+                   alpha=0.3
+                   )
+    )
+    plt.plot([xSolution], [ySolution], marker='o', markersize=5, color="red")
 
-f2.show()
-f2.savefig(newfilepath, dpi=90, bbox_inches='tight')
+    f2.show()
+    f2.savefig(newfilepath, dpi=90, bbox_inches='tight')
 
-plt.close()
+    plt.close()
 
 #plt.axis('off')
 #plt.show()
