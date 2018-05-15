@@ -30,7 +30,7 @@ def load_images_from_folder(folder):
             images.append(img)
     return images
 
-imgs = load_images_from_folder("./group_project/h4group/project_data/a")
+imgs = load_images_from_folder("./project_data/a")
 #plt.imshow(imgs[2])
 test = np.copy(imgs[1])
 tesw = np.copy(imgs[8][:,:,1])
