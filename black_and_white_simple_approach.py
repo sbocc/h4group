@@ -31,13 +31,13 @@ dataset = 1  # 1 is a, 0 is b
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
-    newfolder = 'project_data/a_simple_approach_filter_res/'
+    newfolder = 'project_data/a_black_and_white_approach_filter_res/'
     patch_half_size = 50
     name = 'a'
 else:
     folder = 'project_data/b/'
     xFirstSolution, yFirstSolution = 439, 272
-    newfolder = 'project_data/b_simple_approach_filter_res/'
+    newfolder = 'project_data/b_black_and_white_approach_filter_res/'
     patch_half_size = 20
     name = 'b'
 
@@ -88,6 +88,3 @@ sys.stdout.write('\r')
 ts = time.time()
 st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 print(st)
-
-
-
