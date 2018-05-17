@@ -22,9 +22,18 @@ from PIL import Image
 import csv
 from skimage.feature import match_template
 
+
 # loading images
-# images a
-# folder = "project_data/a"
+dataset = 1  # 1 is a
+if dataset == 1:
+  folder='project/data/a'
+  loc = (348, 191)
+  name = 'a'
+else:
+  folder='project/data/b'
+  loc = (272, 439)
+  name = 'b'
+
 
 # images b
 folder = "project_data/b"
@@ -62,9 +71,7 @@ img = plt.imread(filepath)
 img2 = plt.imread(filepath2)
 imgs = load_images_from_folder(folder)
 
-# load coordinates of first point
-# loc = (191, 348)  # images a
-loc = (272, 439)  # images b
+
 
 
 ############################--------------------------------------------------------------------------------------------
@@ -89,7 +96,7 @@ for i in filenames[1:]:
     coordmax_list.append((loc, i))
     plt.imshow(curr_img)
     plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
-    plt.savefig('b_simple_approach_filter_res/' + i)
+    plt.savefig('simple_approach_filter_res/' + i)
     plt.clf()
     patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
 
