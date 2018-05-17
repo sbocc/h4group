@@ -18,14 +18,18 @@ from toolsHW4 import *
 #                           Main script starts here                          #
 ##############################################################################
 
-#filename = 'project_data/a/000224.png'
-folder = 'project_data/a/'
-newfolder = 'project_data/a_solution/'
-edgefolder = 'project_data/a_edges/'
-#filename = 'project_data/b/001319.png'
-folder = 'project_data/b/'
-newfolder = 'project_data/b_solution/'
-edgefolder = 'project_data/b_edges/'
+dataset = 0
+
+if dataset == 0:
+    #filename = 'project_data/a/000224.png'
+    folder = 'project_data/a/'
+    newfolder = 'project_data/a_solution/'
+    edgefolder = 'project_data/a_edges/'
+else:
+    #filename = 'project_data/b/001319.png'
+    folder = 'project_data/b/'
+    newfolder = 'project_data/b_solution/'
+    edgefolder = 'project_data/b_edges/'
 
 xySolutions = []
 

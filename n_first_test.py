@@ -20,8 +20,15 @@ import csv
 from toolsHW2 import *
 from toolsHW4 import *
 
+dataset = 1
 
-imgs = load_images_from_folder("./project_data/a")
+if dataset == 0:
+    folder = 'project_data/a/'
+else:
+    folder = 'project_data/b/'
+
+
+imgs = load_images_from_folder(folder)
 #plt.imshow(imgs[2])
 test = np.copy(imgs[1])
 tesw = np.copy(imgs[8][:,:,1])
