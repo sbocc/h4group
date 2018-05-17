@@ -24,18 +24,20 @@ from skimage.feature import match_template
 from toolsHW4 import *
 
 # loading images
-dataset = 0
-
+dataset = 1  # 1 is a
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
     newfolder = 'project_data/a_simple_approach_filter_res/'
     patch_half_size = 50
+    name = 'a'
 else:
     folder = 'project_data/b/'
     xFirstSolution, yFirstSolution = 439, 272
     newfolder = 'project_data/b_simple_approach_filter_res/'
     patch_half_size = 20
+    name = 'b'
+
 
 # Load the images and sort the paths to the sequenced names
 filenames = imagesfilename_from_folder(folder)
@@ -76,6 +78,7 @@ for i in filenames[1:]:
     plt.imshow(curr_img)
     plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
     plt.savefig(newfolder + i)
+
     plt.clf()
     patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
 
