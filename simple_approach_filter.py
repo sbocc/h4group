@@ -24,7 +24,7 @@ from skimage.feature import match_template
 from toolsHW4 import *
 
 # loading images
-dataset = 1  # 1 is a
+dataset = 0  # 1 is a, 0 is b
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -37,7 +37,6 @@ else:
     newfolder = 'project_data/b_simple_approach_filter_res/'
     patch_half_size = 20
     name = 'b'
-
 
 # Load the images and sort the paths to the sequenced names
 filenames = imagesfilename_from_folder(folder)
@@ -71,9 +70,9 @@ resimg_list = list()
 
 for i in filenames[1:]:
     curr_img = plt.imread(os.path.join(folder, i))
-    print("curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
+    #print("curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
     corr = match_template(curr_img, patch, pad_input=True)
-    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))  #, np.where(corr == np.max(corr))[2][0]))
+    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
     coordmax_list.append((loc, i))
     plt.imshow(curr_img)
     plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
