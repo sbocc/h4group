@@ -4,7 +4,10 @@
 #
 # define a filter around the first point and use this to search on the following image
 # assumption : from one image to the other, the shape, location and color of the tweezer does not change much
+# duration : 3.5 min for 100 pictures
 
+
+# ---------------------------------------------------------------------------------------------------------------------
 # loading modules
 import sys
 import matplotlib
@@ -24,7 +27,8 @@ from skimage.feature import match_template
 from toolsHW4 import *
 
 # loading images
-dataset = 0  # 1 is a
+dataset = 1  # 1 is a, 0 is b
+
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -37,7 +41,6 @@ else:
     newfolder = 'project_data/b_simple_approach_filter_res/'
     patch_half_size = 20
     name = 'b'
-
 
 # Load the images and sort the paths to the sequenced names
 filenames = imagesfilename_from_folder(folder)
@@ -52,11 +55,7 @@ imgs = load_images_from_folder(folder)
 
 # load coordinates of first point
 loc = (yFirstSolution, xFirstSolution)
-
-
-############################--------------------------------------------------------------------------------------------
-# find patch around coordinate 1a in picture 1a
-# duration : 3.5 min for 100 pictures
+# ---------------------------------------------------------------------------------------------------------------------
 
 # timestamp start
 ts1 = time.time()
@@ -74,7 +73,7 @@ for i in filenames[1:]:
     curr_img = plt.imread(os.path.join(folder, i))
     print("curr_img=" + str(os.path.join(folder, i)) + "curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
     corr = match_template(curr_img, patch, pad_input=True)
-    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))  #, np.where(corr == np.max(corr))[2][0]))
+    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
     coordmax_list.append((loc, i))
     plt.imshow(curr_img)
     plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
@@ -125,18 +124,3 @@ print(st)
 # plt.clf()
 # patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size),
 #         (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
-
-
-
-############################--------------------------------------------------------------------------------------------
-# improvement :
-#
-# sometimes one image is a bit crappy, therefore taking one after would help.
-# or : take some candidate points.
-
-
-############################--------------------------------------------------------------------------------------------
-# improvement :
-#
-# sometimes one image is a bit crappy, therefore taking one after would help.
-
