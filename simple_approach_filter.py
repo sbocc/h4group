@@ -21,35 +21,21 @@ import os
 from PIL import Image
 import csv
 from skimage.feature import match_template
+from toolsHW4 import *
 
 # loading images
-# images a
-# folder = "project_data/a"
+dataset = 0
 
-# images b
-folder = "project_data/b"
-
-def load_images_from_folder(folder):
-    images = []
-    for filename in os.listdir(folder):
-        img = plt.imread(os.path.join(folder,filename))
-        if img is not None:
-            images.append(img)
-    return images
-
-def imagespaths_from_folder(folder):
-    imagesPaths = []
-    for filename in os.listdir(folder):
-        imagesPaths.append(os.path.join(folder,filename))
-    return imagesPaths
-
-def imagesfilename_from_folder(folder):
-    filenames = []
-    for filename in os.listdir(folder):
-        if filename != ".DS_Store":
-            filenames.append(filename)
-    return filenames
-
+if dataset == 1:
+    folder = 'project_data/a/'
+    xFirstSolution, yFirstSolution = 348, 191
+    newfolder = 'project_data/a_simple_approach_filter_res/'
+    patch_half_size = 50
+else:
+    folder = 'project_data/b/'
+    xFirstSolution, yFirstSolution = 439, 272
+    newfolder = 'project_data/b_simple_approach_filter_res/'
+    patch_half_size = 20
 
 # Load the images and sort the paths to the sequenced names
 filenames = imagesfilename_from_folder(folder)
@@ -63,8 +49,7 @@ img2 = plt.imread(filepath2)
 imgs = load_images_from_folder(folder)
 
 # load coordinates of first point
-# loc = (191, 348)  # images a
-loc = (272, 439)  # images b
+loc = (yFirstSolution, xFirstSolution)
 
 
 ############################--------------------------------------------------------------------------------------------
@@ -81,15 +66,16 @@ img = plt.imread(os.path.join(folder, filenames[0]))
 patch = img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
 coordmax_list = list()
 resimg_list = list()
-patch_half_size = 50
+
 for i in filenames[1:]:
     curr_img = plt.imread(os.path.join(folder, i))
+    print("curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
     corr = match_template(curr_img, patch, pad_input=True)
     loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))  #, np.where(corr == np.max(corr))[2][0]))
     coordmax_list.append((loc, i))
     plt.imshow(curr_img)
     plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
-    plt.savefig('b_simple_approach_filter_res/' + i)
+    plt.savefig(newfolder + i)
     plt.clf()
     patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
 
