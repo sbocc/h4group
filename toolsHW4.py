@@ -321,5 +321,6 @@ def rotateMultiplyTexture(texture):
     for i in range(tex_rows):
         for j in range(tex_cols):
             rotatedTexture[i, j] = (texture[i, j] + texture[j, tex_cols - i - 1]) / 2
+#            rotatedTexture[i, j] = np.int(np.sqrt((texture[i, j] ** 2) + texture[j, tex_cols - i - 1] ** 2)))
 
     return rotatedTexture

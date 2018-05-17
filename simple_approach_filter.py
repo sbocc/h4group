@@ -24,7 +24,7 @@ from skimage.feature import match_template
 from toolsHW4 import *
 
 # loading images
-dataset = 1  # 1 is a
+dataset = 0  # 1 is a
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -65,13 +65,14 @@ print(st)
 
 # start with algo
 img = plt.imread(os.path.join(folder, filenames[0]))
+print("img=" + str(os.path.join(folder, filenames[0]))+ "img=" + str(np.shape(img)))
 patch = img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size), :]
 coordmax_list = list()
 resimg_list = list()
 
 for i in filenames[1:]:
     curr_img = plt.imread(os.path.join(folder, i))
-    print("curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
+    print("curr_img=" + str(os.path.join(folder, i)) + "curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
     corr = match_template(curr_img, patch, pad_input=True)
     loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))  #, np.where(corr == np.max(corr))[2][0]))
     coordmax_list.append((loc, i))
