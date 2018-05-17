@@ -127,14 +127,40 @@ print(st)
 
 
 ############################--------------------------------------------------------------------------------------------
-# improvement :
+# improvement : Black and white
 #
-# sometimes one image is a bit crappy, therefore taking one after would help.
-# or : take some candidate points.
+# only focus on the dominant color channel (either blue or green)
+# time : 23 sec
+img = plt.imread(os.path.join(folder, filenames[0]))
+img = img[:, :, find_dominant_channel(img)[0]]
+patch = img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
+
+# timestamp start
+ts1 = time.time()
+st = datetime.datetime.fromtimestamp(ts1).strftime('%Y-%m-%d %H:%M:%S')
+print(st)
+
+coordmax_list = list()
+resimg_list = list()
+for i in filenames[1:]:
+    curr_img = plt.imread(os.path.join(folder, i))
+    curr_img = curr_img[:, :, find_dominant_channel(curr_img)[0]]
+    #print("curr_img=" + str(np.shape(curr_img)) + " patch=" + str(np.shape(patch)))
+    corr = match_template(curr_img, patch, pad_input=True)
+    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
+    coordmax_list.append((loc, i))
+    plt.imshow(curr_img)
+    plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
+    plt.savefig(newfolder + i)
+
+    plt.clf()
+    patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
+
+# timestamp stop
+sys.stdout.write('\r')
+ts = time.time()
+st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+print(st)
 
 
-############################--------------------------------------------------------------------------------------------
-# improvement :
-#
-# sometimes one image is a bit crappy, therefore taking one after would help.
 
