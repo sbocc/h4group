@@ -17,19 +17,19 @@ import time
 import os
 from PIL import Image
 import csv
+from toolsHW2 import *
+from toolsHW4 import *
 
 # - 1 - ##################
 # Load images from Folder
 #############
-folder = "project_data/a"
+dataset = 1
 
-def load_images_from_folder(folder):
-    images = []
-    for filename in os.listdir(folder):
-        img = plt.imread(os.path.join(folder,filename))
-        if img is not None:
-            images.append(img)
-    return images
+if dataset == 0:
+    folder = 'project_data/a/'
+else:
+    folder = 'project_data/b/'
+
 
 imgs = load_images_from_folder(folder)
 #plt.imshow(imgs[2])
@@ -65,8 +65,6 @@ tesw = tesw + 0.2
 tesw[tesw > 1] = 1
 np.max(tesw)
 
-
-
 # - 3 - ##################
 # Idea 2
 #############
@@ -80,12 +78,14 @@ plt.imshow(DoG_of_img)
 # subtract a smoothed image to get the shape much better
 img_filtered_1 = gconv(tesw, 70, 41)
 np.shape(img_filtered_1)
-np.shape(tesw0)
 tesw0 = np.pad(tesw, 20, mode="constant")
+np.shape(tesw0)
 plt.imshow(img_filtered_1)
 plt.imshow(tesw0)
 gagi = tesw0 - img_filtered_1
 plt.imshow(gagi)
+
+plt.show()
 
 # next thing to do : run a detector of a "stab" here! a filter.
 # maybe detection on this works best.
