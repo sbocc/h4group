@@ -20,6 +20,9 @@ import csv
 from toolsHW2 import *
 from toolsHW4 import *
 
+# - 1 - ##################
+# Load images from Folder
+#############
 dataset = 1
 
 if dataset == 0:
