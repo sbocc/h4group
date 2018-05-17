@@ -18,7 +18,7 @@ from toolsHW4 import *
 #                           Main script starts here                          #
 ##############################################################################
 
-dataset = 0
+dataset = 1
 
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
