@@ -265,3 +265,61 @@ def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_
             model_c = c
 
     return model_m, model_c
+
+################
+# EXERCISE 4.1 #
+################
+
+def rotateTexture90(texture):
+    tex_rows, tex_cols, tex_bands = np.shape(texture)
+
+    assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
+
+    rotatedTexture = texture.copy() # np.zeros((tex_rows, tex_cols))
+
+    # print("ssd:"+str(ssd))
+    # for ind, value in np.ndenumerate(rotatedTexture):
+    #
+    # ADD YOUR CODE HERE
+    #
+    for i in range(tex_rows):
+        for j in range(tex_cols):
+            rotatedTexture[i, j] = texture[j, tex_cols - i - 1]
+
+    return rotatedTexture
+
+def rotateTexture180(texture):
+    tex_rows, tex_cols, tex_bands = np.shape(texture)
+
+    assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
+
+    rotatedTexture = texture.copy() # np.zeros((tex_rows, tex_cols))
+
+    # print("ssd:"+str(ssd))
+    # for ind, value in np.ndenumerate(rotatedTexture):
+    #
+    # ADD YOUR CODE HERE
+    #
+    for i in range(tex_rows):
+        for j in range(tex_cols):
+            rotatedTexture[i, j] = texture[tex_rows - i - 1, tex_cols - j - 1]
+
+    return rotatedTexture
+
+def rotateMultiplyTexture(texture):
+    tex_rows, tex_cols, tex_bands = np.shape(texture)
+
+    assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
+
+    rotatedTexture = texture.copy()  # np.zeros((tex_rows, tex_cols))
+
+    # print("ssd:"+str(ssd))
+    # for ind, value in np.ndenumerate(rotatedTexture):
+    #
+    # ADD YOUR CODE HERE
+    #
+    for i in range(tex_rows):
+        for j in range(tex_cols):
+            rotatedTexture[i, j] = (texture[i, j] + texture[j, tex_cols - i - 1]) / 2
+
+    return rotatedTexture

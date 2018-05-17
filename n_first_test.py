@@ -51,7 +51,6 @@ np.max(imgs[1])
 np.mean(imgs[1])
 np.median(imgs[1])
 
-
 test[test > np.mean(imgs[1])] = 1
 plt.imshow(test[:,:,1])
 plt.imshow(tesw)

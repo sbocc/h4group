@@ -20,16 +20,18 @@ from toolsHW4 import *
 
 dataset = 0
 
-if dataset == 0:
+if dataset == 1:
     #filename = 'project_data/a/000224.png'
     folder = 'project_data/a/'
     newfolder = 'project_data/a_solution/'
     edgefolder = 'project_data/a_edges/'
+    xFirstSolution, yFirstSolution = 348, 191
 else:
     #filename = 'project_data/b/001319.png'
     folder = 'project_data/b/'
     newfolder = 'project_data/b_solution/'
     edgefolder = 'project_data/b_edges/'
+    xFirstSolution, yFirstSolution = 439, 272
 
 xySolutions = []
 
@@ -94,8 +96,22 @@ for x in range(0, 3): # loop only first 3
 
     plt.imshow(image)
 
-    xSolution, ySolution = 348 , 191 # 255, 140
-    h, w = 80, 80
+    xSolution, ySolution = xFirstSolution , yFirstSolution
+    h, w = 30, 30
+
+    texture_img = image[ySolution - h:ySolution + h,xSolution - w:xSolution + w, :]
+    #texture_edges = edge_map(texture_img)
+    texture_rotate1 = rotateMultiplyTexture(texture_img)
+    texture_rotate2 = rotateTexture180(texture_rotate1)
+    # texture_rotate3 = rotateTexture(texture_rotate2)
+    texture_rotateTotal = texture_rotate1 * texture_rotate2
+    #texture_edges_trans = np.transpose(texture_edges)
+    #img_filtered = convolve2d(image, np.transpose(image))
+
+    print("xSolution:" + str(xSolution - w) + "-ySolution-" + str(xSolution + w) + ": xEyeSize:" + str(np.shape(texture_img)))
+    plt.imshow(texture_rotateTotal)
+    plt.show()
+
     n_plots = 1
     ax1 = plt.subplot(n_plots, n_plots, 1)
     ax1.add_patch(
