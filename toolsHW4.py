@@ -53,6 +53,20 @@ def min_max_eye(edge_map):
 
     return xMin, xMax, yMin, yMax
 
+#####################################
+# Find dominant color channel
+#####################################
+def find_dominant_channel(img):
+    # find out which color channel is dominant
+    # check for each channel if its mean is higher than the mean before
+    om = 0
+    for i in range(np.shape(img)[2]):
+        nm = np.mean(img[:, :, i])
+        if nm > om:
+            om = nm
+    return((i, om))
+
+
 ##############################################################################
 #                        Functions to complete                               #
 ##############################################################################
