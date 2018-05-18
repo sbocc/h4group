@@ -284,8 +284,11 @@ def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_
 # EXERCISE 4.1 #
 ################
 
-def rotateTexture90(texture):
-    tex_rows, tex_cols, tex_bands = np.shape(texture)
+def rotateTexture90(texture, dominant_channel = -1):
+    if dominant_channel > -1:
+        tex_rows, tex_cols = np.shape(texture)
+    else:
+        tex_rows, tex_cols, tex_bands = np.shape(texture)
 
     assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
 
@@ -302,8 +305,11 @@ def rotateTexture90(texture):
 
     return rotatedTexture
 
-def rotateTexture180(texture):
-    tex_rows, tex_cols, tex_bands = np.shape(texture)
+def rotateTexture180(texture, dominant_channel = -1):
+    if dominant_channel > -1 :
+        tex_rows, tex_cols = np.shape(texture)
+    else:
+        tex_rows, tex_cols, tex_bands = np.shape(texture)
 
     assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
 
@@ -316,12 +322,17 @@ def rotateTexture180(texture):
     #
     for i in range(tex_rows):
         for j in range(tex_cols):
-            rotatedTexture[i, j] = texture[tex_rows - i - 1, tex_cols - j - 1]
+            # rotatedTexture[i, j] = texture[tex_rows - i - 1, tex_cols - j - 1]
+            rotatedTexture[i, j] = texture[i, j] + texture[tex_rows - i - 1, tex_cols - j - 1]
 
     return rotatedTexture
 
-def rotateMultiplyTexture(texture):
-    tex_rows, tex_cols, tex_bands = np.shape(texture)
+def rotateAndSumTexture(texture, dominant_channel = -1):
+
+    if dominant_channel > -1 :
+        tex_rows, tex_cols = np.shape(texture)
+    else:
+        tex_rows, tex_cols, tex_bands = np.shape(texture)
 
     assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
 
@@ -334,7 +345,15 @@ def rotateMultiplyTexture(texture):
     #
     for i in range(tex_rows):
         for j in range(tex_cols):
-            rotatedTexture[i, j] = (texture[i, j] + texture[j, tex_cols - i - 1]) / 2
-#            rotatedTexture[i, j] = np.int(np.sqrt((texture[i, j] ** 2) + texture[j, tex_cols - i - 1] ** 2)))
+            # rotation und aufsummieren gegen Uhrzeiger (nach links)
+            # rotatedTexture[i, j] = (texture[i, j] + texture[j, tex_cols - i - 1]) / 2
+            # rotation und aufsummieren im Uhrzeiger (nach recht)
+             rotatedTexture[i, j] = (texture[i, j] + texture[tex_rows - j - 1, i]) / 2
+            # rotation und aufsummieren (nach links und recht)
+            # rotatedTexture[i, j] = (texture[i, j] + texture[tex_rows - j - 1, i] + texture[j, tex_cols - i - 1]) / 3
+            # rotation und aufsummieren (nach links, recht und 180)
+            #rotatedTexture[i, j] = (texture[i, j] * texture[i, j] + texture[tex_rows - j - 1, i] * texture[tex_rows - j - 1, i] + texture[j, tex_cols - i - 1] * texture[j, tex_cols - i - 1] + texture[tex_rows - i - 1, tex_cols - j - 1] * texture[tex_rows - i - 1, tex_cols - j - 1]) / 4
+            # rotation und aufsummieren (nur 180)
+            #rotatedTexture[i, j] = (texture[i, j] * texture[i, j] + texture[tex_rows - i - 1, tex_cols - j - 1] * texture[tex_rows - i - 1, tex_cols - j - 1]) / 2
 
     return rotatedTexture
