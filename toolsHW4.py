@@ -41,10 +41,7 @@ def imagesfilename_from_folder(folder):
     return filenames
 
 def min_max_eye(edge_map):
-    xMin, xMax, yMin, yMax = 0,0,0,0
-
     indices_nonzero = edge_map.nonzero()
-    # print(indices_nonzero)
 
     xMin = indices_nonzero[0].min()
     xMax = indices_nonzero[0].max()
@@ -199,10 +196,13 @@ def point_to_line_dist(m, c, x0, y0):
     return dist
 
 
-def detecingEyeCenterAndSize(image, edges):
+def detecingEyeCenterAndSize(image, threshold = 0.4): # edges,
     # detecing eyeCenter and size
-    xMin, xMax, yMin, yMax = min_max_eye(edges)
-    xEyeCenter, yEyeCenter = 348, 191  # Center on first image of set A
+    calcimage = image.copy()
+    calcimage[calcimage < threshold] = 0
+
+    xMin, xMax, yMin, yMax = min_max_eye(calcimage)
+    xEyeCenter, yEyeCenter = None, None
 
     yEyeCenter = (xMax + xMin) / 2
     xEyeCenter = (yMax + yMin) / 2
@@ -212,25 +212,12 @@ def detecingEyeCenterAndSize(image, edges):
     else:
         xEyeSize = (yMax - yMin) / 2
 
-    # print("xmin:"+str(xMin)+"--"+str(xMax)+": ymin:"+str(yMin)+"--"+str(yMax))
-    # end of detecing eyeCenter and size
+    #edgesAroundEye = edges[xMin:xMax, yMin:yMax]
 
-    edgesAroundEye = edges[xMin:xMax, yMin:yMax]
-
-    # f1 = plt.figure()
-    # plt.imshow(edges)
-    # f1.savefig(edgefilepath, dpi=90, bbox_inches='tight')
-
-    # plt.title('edge map')
-    # f1.show()
-
-    # plt.axis('off')
-    # plt.show()
-
-    edge_pts = np.array(np.nonzero(edgesAroundEye), dtype=float).T
-    edge_pts_xy = edge_pts[:, ::-1]
-
-    return edge_pts, edge_pts_xy, xEyeCenter, yEyeCenter, xEyeSize
+    #edge_pts = np.array(np.nonzero(edgesAroundEye), dtype=float).T
+    # edge_pts_xy = edge_pts[:, ::-1]
+    # edge_pts, edge_pts_xy,
+    return  xEyeCenter, yEyeCenter, xEyeSize
 
 
 def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio):
