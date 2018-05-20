@@ -20,7 +20,7 @@ from skimage.feature import match_template
 #                           Main script starts here                          #
 ##############################################################################
 
-dataset = 0
+dataset = 1
 
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
@@ -35,7 +35,7 @@ else:
     newfolder = 'project_data/b_solution/'
     edgefolder = 'project_data/b_edges/'
     xFirstSolution, yFirstSolution = 439, 272
-    threshold = 0.25
+    threshold = 0.2
 
 xySolutions = []
 
@@ -69,7 +69,6 @@ previous_xSolution, previous_ySolution = xFirstSolution, yFirstSolution
 # Load the images and sort the paths to the sequenced names
 filenames = imagesfilename_from_folder(folder)
 filenames = np.sort(filenames)
-#print(filenames)
 
 # timestamp start
 ts1 = time.time()
@@ -88,17 +87,19 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     newfilepath = os.path.join(newfolder, newfilename)
     edgefilepath = os.path.join(edgefolder, filename)
 
-    image = plt.imread(filepath)
-    hist, bins = np.histogram(image.ravel(), 256, [0, 256], density=True)
+    origImage = plt.imread(filepath)
+    hist, bins = np.histogram(origImage.ravel(), 256, [0, 256], density=True)
 
 
     # ##################
     # Color or Grayscale
     # ##################
-    dominant_channel = find_dominant_channel(image)[0] # set to -1 if you want color approach
+    dominant_channel = find_dominant_channel(origImage)[0] # set to -1 if you want color approach
 
     if dominant_channel > -1:
-        image = image[:, :, dominant_channel]
+        image = origImage[:, :, dominant_channel]
+    else:
+        image = origImage
     # end Color or Grayscale
     # ##################
 
@@ -106,7 +107,6 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # Detect EyeCenter And Size
     # ##################
     previous_xEyeCenter, previous_yEyeCenter,previous_xEyeSize = xEyeCenter, yEyeCenter, xEyeSize
-    # edge_pts, edge_pts_xy, \
     xEyeCenter, yEyeCenter, xEyeSize = detecingEyeCenterAndSize(image,threshold) # edges
     newEyeCenterDifference = tuple((int(yEyeCenter - previous_yEyeCenter), int(xEyeCenter - previous_xEyeCenter)))
     print("EyeCenter X:"+str(xEyeCenter)+" Y:"+str(yEyeCenter)+"Previous Diff:"+str(newEyeCenterDifference[1])+" Y:"+str(newEyeCenterDifference[0]))
@@ -193,21 +193,13 @@ for index, filename in enumerate(filenames): # loop through all images in folder
             for indexY in range(maxRangeY):
                 eye_gaussfilter[solutionInEye[0] - h + gaussBorder + indexY][solutionInEye[1] - w + gaussBorder + indexX] = gaussfilter[indexX + gaussBorder][indexY + gaussBorder]
 
-        #eye_texture_img = eye_texture_img * eye_gaussfilter
+        eye_texture_img = eye_texture_img * eye_gaussfilter
         # end create eye_gaussfilter around the previous xySolution
         # ##################
 
-        #texture_rotateAndSum = rotateAndSumTexture(texture_img, dominant_channel)
-        #textureCenter = texture_rotateAndSum[h][w]
-        texture_filtered = texture_img * gaussfilter # gconv(texture_rotateAndSum, 1, square)
-        #newShape = np.shape(texture_filtered)
-        #entrypoint = int(square / 2)
-        #texture_filtered = texture_filtered[entrypoint:entrypoint + 2 * h,entrypoint:entrypoint + 2 * w]
+        texture_filtered = texture_img * gaussfilter
     else : # color approach
         texture_img = image[ySolution - h + plus_divergent:ySolution + h + plus_divergent,xSolution - w + plus_divergent:xSolution + w + plus_divergent, :]
-        # texture_rotateAndSum = rotateAndSumTexture(texture_img, dominant_channel)
-        # textureCenter = texture_rotateAndSum[h][w]
-        # texture_filtered = texture_rotateAndSum
         texture_filtered = texture_img * gaussfilter
     # pick a texture_img around the previous xySolution
     ######
@@ -233,28 +225,26 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # ##################
     # create time_difference_texture_img as differenc from this to previous texture_img around the solution
     # ##################
+
+    # ##################
+    #  tried to useTimeDifference Patch
     # useTimeDifferenceInPatch = 0
     # if useTimeDifferenceInPatch == 1:
     #     time_difference_texture_img = texture_filtered - previous_texture_img
     # else:
     #     time_difference_texture_img = texture_filtered * -1 # invert because without timmedifference in Patch and time difference in eyetexture it is not inverted
-    #print("max" + str(np.max(eye_texture_img)) + "min" + str(np.min(eye_texture_img)))
+    # end tried to useTimeDifference Patch
+    # ##################
 
-    # try to min out the extrem lights (limiter)
+    # ##################
+    #  tried to min out the extrem lights (limiter) is not working well at the moment
     #min = np.min(eye_texture_img)
     #max = np.max(eye_texture_img)
     #eye_texture_img[eye_texture_img == max] = (min + max) / 2
+    # end tried to min out the extrem lights
+    # ##################
 
     time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
-
-    #time_difference_texture_img = gconv(time_difference_texture_img, 5, square)
-    #newShape = np.shape(time_difference_texture_img)
-    #entrypoint = int(square / 2)
-    #time_difference_texture_img = time_difference_texture_img[entrypoint:entrypoint + 2 * h, entrypoint:entrypoint + 2 * w]
-    # median = np.median(time_difference_texture_img)
-    #time_difference_texture_img = rotateTexture180(time_difference_texture_img, dominant_channel)
-
-    # time_difference_texture_img = time_difference_texture_img * gaussfilter # multiply with a gausian around the center to lose uninteresting details at the border
 
     # end create time_difference_texture_img as differenc from this to previous texture_img around the solution
     # ##################
@@ -266,60 +256,58 @@ for index, filename in enumerate(filenames): # loop through all images in folder
 
         previous_xSolution, previous_ySolution = xSolution, ySolution
 
+        # ##################
+        # calculate of the patch finally used for this iteration
+        # ##################
+
         ######
-        # recalculate the sliding window variables
+        # tryied to calculate the difference between new and first patch
         corrdinateChangeToFirst = match_texture_patch(new_texture_patch, first_texture_patch)
         print("corrdinateChangeToFirst: " + str(corrdinateChangeToFirst))
 
-        #new_texture_patch_corrected = texture_filtered[
-        #                    entrypoint + corrdinateChangeToFirst[1] - enlargePatchByExtraPixel:entrypoint + corrdinateChangeToFirst[1] + h + enlargePatchByExtraPixel,
-        #                    entrypoint + corrdinateChangeToFirst[0] - enlargePatchByExtraPixel:entrypoint + corrdinateChangeToFirst[0] + w + enlargePatchByExtraPixel] * -1  # multiply by -1 to invert the patch as the time_difference_texture_img is inverted
-
+        ######
+        # tryied to calculate the difference between new and previous patch
         corrdinateChange = match_texture_patch(new_texture_patch, previous_texture_patch)
         print("corrdinateChange: " + str(corrdinateChange))
 
+        ######
+        # tryied to use different variation of new and old patches as the finally used for this iteration
         texture_patch = previous_texture_patch # new_texture_patch_corrected  # (new_texture_patch + previous_texture_patch) / 2
         #corrdinateChangeMatch = match_texture_patch(new_texture_patch, texture_patch)
         #print("corrdinateChangeMatch: " + str(corrdinateChangeMatch))
 
+        ######
+        # store previous patches
         previous_texture_patch_gen2 = previous_texture_patch_gen1
         previous_texture_patch_gen1 = previous_texture_patch
         previous_texture_patch = new_texture_patch
-        # end recalculate the sliding window variables
+
+        # end calculate of the patch finally used for this iteration
         ######
 
-        print("eyetexture shape: " + str(np.shape(time_difference_eye_texture_img)))
-
-
-
         corr = match_template(time_difference_eye_texture_img, texture_patch, pad_input=True)
-        #corr = match_template(time_difference_texture_img, texture_patch, pad_input=True)
         loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
 
+        ######
+        # show found solution
         # plt.imshow(time_difference_eye_texture_img)
         # plt.imshow(texture_patch)
         # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
         # plt.show()
 
         corr2 = match_template(time_difference_eye_texture_img, first_texture_patch, pad_input=True)
-        #corr2 = match_template(time_difference_texture_img, first_texture_patch, pad_input=True)
         loc2 = tuple((np.where(corr2 == np.max(corr2))[0][0], np.where(corr2 == np.max(corr2))[1][0]))
 
+        print("corrdinateChangeMatch: " + str(loc) + " loc: " + str(loc2) + " averageLoc: " + str(averageLoc))
+
+        ######
+        # tryied to use different variation of matches as final solution for this iteration
         # averageLoc = loc
         averageLoc = tuple((int((loc[0] + loc2[0])/2), int((loc[1] + loc2[1])/2)))
 
-        print("corrdinateChangeMatch: " + str(loc) + " loc: " + str(loc2)+ " averageLoc: " + str(averageLoc))
-
-        # xSolution, ySolution = xSolution - w + plus_divergent + averageLoc[1], ySolution - h + plus_divergent + averageLoc[0]
-
-        print("xSolution: " + str(xSolution) + " ySolution: " + str(ySolution) + " averageLoc: " + str(averageLoc))
-        print("xEyeCenter: " + str(xEyeCenter) + " yEyeCenter: " + str(yEyeCenter) + " first_EyeRadius: " + str(first_EyeRadius))
-
-        # xSolution, ySolution = xEyeCenter - first_EyeRadius + plus_divergent + solutionInEye[1] - w + gaussBorder + averageLoc[1], yEyeCenter - first_EyeRadius + plus_divergent + solutionInEye[0] - h + gaussBorder + averageLoc[0]
         xSolution, ySolution = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1] + gaussBorder, yEyeCenter - first_EyeRadius + plus_divergent +  + gaussBorder + averageLoc[0]
 
         # solutionInEye = tuple((first_EyeRadius + (ySolution - yEyeCenter), first_EyeRadius + (xSolution - xEyeCenter)))
-
         # xSolution, ySolution = xSolution + corrdinateChange[1], ySolution + corrdinateChange[0]
 
 
@@ -333,24 +321,21 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # end match the texture_patch to the selected time_difference_texture_img
     # ##################
 
-    plt.imshow(image)
-    # plt.imshow(texture_patch)
-    #plt.imshow(eye_gaussfilter)
-    #plt.imshow(gaussfilter)
-    plt.imshow(time_difference_eye_texture_img)
-    plt.imshow(texture_patch)
-    plt.scatter(x=[loc[1]], y=[loc[0]], c='b', s=10)
-    plt.scatter(x=[loc2[1]], y=[loc2[0]], c='#9929BD', s=10)
-    plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='r', s=10)
-    # plt.imshow(time_difference_texture_img)
-    #plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
-    #plt.scatter(x=[loc2[1]], y=[loc2[0]], c='b', s=10)
-    #plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='g', s=10)
-    plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='g', s=10)
+
+    plt.imshow(origImage) # show original image
+    # plt.imshow(image) # show image used for calculation
+    # plt.imshow(eye_gaussfilter) # show the used eye_gaussfilter for this iteration
+    # plt.imshow(gaussfilter) # show the used gaussfilter on the patch for this iteration
+    plt.imshow(time_difference_eye_texture_img) # show the eye texture used for match in this iteration
+    plt.imshow(texture_patch) # show the patch used for match in this iteration
+    plt.scatter(x=[loc[1]], y=[loc[0]], c='b', s=10) # show the 1. found match
+    plt.scatter(x=[loc2[1]], y=[loc2[0]], c='#9929BD', s=10) # show the 1. found match
+    plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='r', s=10) # show the average of the found matches
+    plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='g', s=10) # show the previous solution
 
 
     # ##################
-    # paint a red square arount solution coordinate
+    # paint a red square arount solution coordinate (patch area used in the next iteration)
     # ##################
     n_plots = 1
     size = np.shape(texture_patch)
@@ -369,7 +354,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # ##################
 
     # ##################
-    # paint a greed square arount solution coordinate
+    # paint a greed square arount solution coordinate (focus area where the gaus will be applied in the next iteration)
     # ##################
     n_plots = 1
     ax1 = plt.subplot(n_plots, n_plots, 1)
@@ -392,7 +377,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     ax1.add_patch(
         plt.Circle((xEyeCenter, yEyeCenter), radius= xEyeSize,
                    edgecolor = 'red',
-                   facecolor="#00ccff",
+                   facecolor= None, #"#00ccff",
                    alpha=0.3
                    )
     )
