@@ -14,6 +14,7 @@ from itertools import chain
 from skimage import feature, color
 import os
 import sys
+from skimage.feature import match_template
 
 ################
 # Load images from Folder
@@ -204,13 +205,13 @@ def detecingEyeCenterAndSize(image, threshold = 0.4): # edges,
     xMin, xMax, yMin, yMax = min_max_eye(calcimage)
     xEyeCenter, yEyeCenter = None, None
 
-    yEyeCenter = (xMax + xMin) / 2
-    xEyeCenter = (yMax + yMin) / 2
+    yEyeCenter = int((xMax + xMin) / 2)
+    xEyeCenter = int((yMax + yMin) / 2)
 
     if (xMax - xMin) > (yMax - yMin):
-        xEyeSize = (xMax - xMin) / 2
+        xEyeSize = int((xMax - xMin) / 2)
     else:
-        xEyeSize = (yMax - yMin) / 2
+        xEyeSize = int((yMax - yMin) / 2)
 
     #edgesAroundEye = edges[xMin:xMax, yMin:yMax]
 
@@ -344,3 +345,17 @@ def rotateAndSumTexture(texture, dominant_channel = -1):
             #rotatedTexture[i, j] = (texture[i, j] * texture[i, j] + texture[tex_rows - i - 1, tex_cols - j - 1] * texture[tex_rows - i - 1, tex_cols - j - 1]) / 2
 
     return rotatedTexture
+
+def match_texture_patch(new_texture_patch,previous_texture_patch):
+    newShape = np.shape(new_texture_patch)
+    previousShape = np.shape(previous_texture_patch)
+    shapeCenterX = int(previousShape[0] / 2)
+    shapeCenterY = int(previousShape[1] / 2)
+
+    corr = match_template(previous_texture_patch, new_texture_patch, pad_input=True)
+    loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
+
+    # print("newShape:"+str(newShape)+" previousShape:"+str(previousShape)+" loc:"+str(loc))
+    # print("newlocation is x:"+str(loc[1]-shapeCenterX)+" y:"+str(loc[0]-shapeCenterY))
+
+    return tuple((loc[0] - shapeCenterY, loc[1] - shapeCenterX))
