@@ -20,7 +20,7 @@ from skimage.feature import match_template
 #                           Main script starts here                          #
 ##############################################################################
 
-dataset = 0
+dataset = 1
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
     folder = 'project_data/a/'
@@ -200,7 +200,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
             for indexY in range(maxRangeY):
                 eye_gaussfilter[solutionInEye[0] - h + gaussBorder + indexY][solutionInEye[1] - w + gaussBorder + indexX] = gaussfilter[indexX + gaussBorder][indexY + gaussBorder]
 
-        # eye_texture_img_withGauss = eye_texture_img * eye_gaussfilter
+        eye_texture_img = eye_texture_img * eye_gaussfilter
         # end create eye_gaussfilter around the previous xySolution
         # ##################
 
@@ -218,9 +218,9 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # end default eye_texture_img
     ######
 
-    img_f1 = gconv(eye_texture_img, sigma_1, filter_size, mode='same')
-    img_f2 = gconv(previous_eye_texture_img, sigma_2, filter_size, mode='same')
-    time_difference_eye_texture_img = (img_f1 - img_f2)
+    #img_f1 = gconv(eye_texture_img, sigma_1, filter_size, mode='same')
+    #img_f2 = gconv(previous_eye_texture_img, sigma_2, filter_size, mode='same')
+    #time_difference_eye_texture_img = (img_f1 - img_f2)
 
     # texture_filtered = image[solutionInEye[0] - h:solutionInEye[0] + h + 1,solutionInEye[1] - w:solutionInEye[1] + w + 1]
 
@@ -263,7 +263,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # plt.imshow(time_difference_eye_texture_img)
     # plt.show()
 
-    # time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
+    time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
 
     # end create time_difference_texture_img as differenc from this to previous texture_img around the solution
     # ##################
