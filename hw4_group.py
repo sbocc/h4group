@@ -20,7 +20,7 @@ from skimage.feature import match_template
 #                           Main script starts here                          #
 ##############################################################################
 
-dataset = 1
+dataset = 0
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
     folder = 'project_data/a/'
@@ -66,6 +66,10 @@ locGen2 = tuple((0,0))
 locGen3 = tuple((0,0))
 averageLoc = tuple((0,0))
 solutionInEye = tuple((0,0))
+
+sigma_1 = 1
+sigma_2 = 3
+filter_size = 30
 
 xSolution, ySolution = xFirstSolution , yFirstSolution
 previous_xSolution, previous_ySolution = xFirstSolution, yFirstSolution
@@ -196,7 +200,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
             for indexY in range(maxRangeY):
                 eye_gaussfilter[solutionInEye[0] - h + gaussBorder + indexY][solutionInEye[1] - w + gaussBorder + indexX] = gaussfilter[indexX + gaussBorder][indexY + gaussBorder]
 
-        eye_texture_img = eye_texture_img * eye_gaussfilter
+        # eye_texture_img_withGauss = eye_texture_img * eye_gaussfilter
         # end create eye_gaussfilter around the previous xySolution
         # ##################
 
@@ -213,6 +217,13 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         previous_eye_texture_img = eye_texture_img.copy()
     # end default eye_texture_img
     ######
+
+    img_f1 = gconv(eye_texture_img, sigma_1, filter_size, mode='same')
+    img_f2 = gconv(previous_eye_texture_img, sigma_2, filter_size, mode='same')
+    time_difference_eye_texture_img = (img_f1 - img_f2)
+
+    # texture_filtered = image[solutionInEye[0] - h:solutionInEye[0] + h + 1,solutionInEye[1] - w:solutionInEye[1] + w + 1]
+
 
     #####
     # pick the matching texture_patch
@@ -247,7 +258,12 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # end tried to min out the extrem lights
     # ##################
 
-    time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
+    ######
+    # show found solution
+    # plt.imshow(time_difference_eye_texture_img)
+    # plt.show()
+
+    # time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
 
     # end create time_difference_texture_img as differenc from this to previous texture_img around the solution
     # ##################
@@ -281,7 +297,6 @@ for index, filename in enumerate(filenames): # loop through all images in folder
 
         # end calculate of the patch finally used for this iteration
         ######
-
 
         corrNew = match_template(time_difference_eye_texture_img, texture_patch, pad_input=True)
         locNew = tuple((np.where(corrNew == np.max(corrNew))[0][0], np.where(corrNew == np.max(corrNew))[1][0]))
@@ -319,9 +334,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate + plus_divergent - h:yFirstSolutionCandidate + h + plus_divergent + 1,
                       xFirstSolutionCandidate - w + plus_divergent:xFirstSolutionCandidate + w + plus_divergent + 1] # * gaussfilter * -1
 
-        sigma_1 = 1
-        sigma_2 = 1.5
-        filter_size = 30
+
         img_f1 = gconv(texture_filtered, sigma_1, filter_size)
         img_f2 = gconv(texture_filtered_SolutionCandidate, sigma_2, filter_size)
         texture_filtered_SolutionCandidate = img_f1 - img_f2

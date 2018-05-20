@@ -100,7 +100,7 @@ def myconv2(img, filt):
 
     return img_filtered
 
-def gconv(image, sigma, filter_size): 
+def gconv(image, sigma, filter_size, mode='full'):
     # Function that filters an image with a Gaussian filter
     # INPUTS
     # @ image         : 2D image
@@ -112,7 +112,7 @@ def gconv(image, sigma, filter_size):
     # Create 2D Gaussian filter
     gauss2d_filter = gauss2d(sigma, filter_size = filter_size)
     # Filter the image
-    img_filtered = convolve2d(image, gauss2d_filter)
+    img_filtered = convolve2d(image, gauss2d_filter, mode= mode)
     # img_filtered   = myconv2(image, gauss2d_filter)
 
     return img_filtered
