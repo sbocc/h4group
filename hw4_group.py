@@ -21,7 +21,6 @@ from skimage.feature import match_template
 ##############################################################################
 
 dataset = 1
-
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
     folder = 'project_data/a/'
@@ -56,11 +55,15 @@ previous_eye_texture_img = None
 previous_texture_img = None
 texture_patch = None
 previous_texture_patch = None
-previous_texture_patch_gen1 = None
 previous_texture_patch_gen2 = None
+previous_texture_patch_gen3 = None
 first_texture_patch  = None
-loc = tuple((0,0))
-loc2 = tuple((0,0))
+corrdinateChange = tuple((0,0))
+locNew = tuple((0,0))
+locFirst = tuple((0,0))
+locGen1 = tuple((0,0))
+locGen2 = tuple((0,0))
+locGen3 = tuple((0,0))
 averageLoc = tuple((0,0))
 solutionInEye = tuple((0,0))
 
@@ -198,7 +201,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         # ##################
 
         texture_filtered = texture_img * gaussfilter
-    else : # color approach
+    else : # color approach not working anymore at the moment
         texture_img = image[ySolution - h + plus_divergent:ySolution + h + plus_divergent,xSolution - w + plus_divergent:xSolution + w + plus_divergent, :]
         texture_filtered = texture_img * gaussfilter
     # pick a texture_img around the previous xySolution
@@ -262,31 +265,26 @@ for index, filename in enumerate(filenames): # loop through all images in folder
 
         ######
         # tryied to calculate the difference between new and first patch
-        corrdinateChangeToFirst = match_texture_patch(new_texture_patch, first_texture_patch)
-        print("corrdinateChangeToFirst: " + str(corrdinateChangeToFirst))
+        # corrdinateChangeToFirst = match_texture_patch(new_texture_patch, first_texture_patch)
+        # print("corrdinateChangeToFirst: " + str(corrdinateChangeToFirst))
 
         ######
         # tryied to calculate the difference between new and previous patch
-        corrdinateChange = match_texture_patch(new_texture_patch, previous_texture_patch)
-        print("corrdinateChange: " + str(corrdinateChange))
+        # corrdinateChange = match_texture_patch(new_texture_patch, previous_texture_patch)
+        # print("corrdinateChange: " + str(corrdinateChange))
 
         ######
         # tryied to use different variation of new and old patches as the finally used for this iteration
-        texture_patch = previous_texture_patch # new_texture_patch_corrected  # (new_texture_patch + previous_texture_patch) / 2
+        texture_patch = new_texture_patch # (new_texture_patch + previous_texture_patch) / 2
         #corrdinateChangeMatch = match_texture_patch(new_texture_patch, texture_patch)
         #print("corrdinateChangeMatch: " + str(corrdinateChangeMatch))
-
-        ######
-        # store previous patches
-        previous_texture_patch_gen2 = previous_texture_patch_gen1
-        previous_texture_patch_gen1 = previous_texture_patch
-        previous_texture_patch = new_texture_patch
 
         # end calculate of the patch finally used for this iteration
         ######
 
-        corr = match_template(time_difference_eye_texture_img, texture_patch, pad_input=True)
-        loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
+
+        corrNew = match_template(time_difference_eye_texture_img, texture_patch, pad_input=True)
+        locNew = tuple((np.where(corrNew == np.max(corrNew))[0][0], np.where(corrNew == np.max(corrNew))[1][0]))
 
         ######
         # show found solution
@@ -295,27 +293,72 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
         # plt.show()
 
-        corr2 = match_template(time_difference_eye_texture_img, first_texture_patch, pad_input=True)
-        loc2 = tuple((np.where(corr2 == np.max(corr2))[0][0], np.where(corr2 == np.max(corr2))[1][0]))
+        #corrGen1 = match_template(time_difference_eye_texture_img, previous_texture_patch, pad_input=True)
+        #locGen1 = tuple((np.where(corrGen1 == np.max(corrGen1))[0][0], np.where(corrGen1 == np.max(corrGen1))[1][0]))
 
-        print("corrdinateChangeMatch: " + str(loc) + " loc: " + str(loc2) + " averageLoc: " + str(averageLoc))
+        #corrGen2 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen2, pad_input=True)
+        #locGen2 = tuple((np.where(corrGen2 == np.max(corrGen2))[0][0], np.where(corrGen2 == np.max(corrGen2))[1][0]))
+
+        #corrGen3 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen3, pad_input=True)
+        #locGen3 = tuple((np.where(corrGen3 == np.max(corrGen3))[0][0], np.where(corrGen3 == np.max(corrGen3))[1][0]))
+
+        #corrFirst = match_template(time_difference_eye_texture_img, first_texture_patch, pad_input=True)
+        #locFirst = tuple((np.where(corrFirst == np.max(corrFirst))[0][0], np.where(corrFirst == np.max(corrFirst))[1][0]))
 
         ######
         # tryied to use different variation of matches as final solution for this iteration
-        # averageLoc = loc
-        averageLoc = tuple((int((loc[0] + loc2[0])/2), int((loc[1] + loc2[1])/2)))
+        averageLoc = locNew
+        # averageLoc = tuple((int((locNew[0] + locGen1[0] + locGen2[0] + locGen3[0])/4), int((locNew[1] + locGen1[1] + locGen2[1] + locGen3[1])/4)))
+
+        print("corrdinateChangeMatch: " + str(locNew) + " locGen1: " + str(locGen1) + " locGen2: " + str(locGen2) + " locGen3: " + str(locGen3) + " locFirst: " + str(locFirst) + " averageLoc: " + str(averageLoc))
+
+        ######
+        # tryied to calculate the difference between new average and previous patch
+        xFirstSolutionCandidate, yFirstSolutionCandidate = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1] + gaussBorder, yEyeCenter - first_EyeRadius + plus_divergent +  + gaussBorder + averageLoc[0]
+
+        texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate + plus_divergent - h:yFirstSolutionCandidate + h + plus_divergent + 1,
+                      xFirstSolutionCandidate - w + plus_divergent:xFirstSolutionCandidate + w + plus_divergent + 1] # * gaussfilter * -1
+
+        sigma_1 = 1
+        sigma_2 = 1.5
+        filter_size = 30
+        img_f1 = gconv(texture_filtered, sigma_1, filter_size)
+        img_f2 = gconv(texture_filtered_SolutionCandidate, sigma_2, filter_size)
+        texture_filtered_SolutionCandidate = img_f1 - img_f2
+
+        corrdinateChange = match_texture_patch(first_texture_patch, texture_filtered_SolutionCandidate )
+        print("corrdinateChange first_texture_patch: " + str(corrdinateChange))
+
+        corrdinateChangePrevious = match_texture_patch(previous_texture_patch, texture_filtered_SolutionCandidate )
+        print("corrdinateChange previous_texture_patch: " + str(corrdinateChangePrevious))
+
+        finalCorrdinateChange = corrdinateChangePrevious # tuple((int((corrdinateChange[0] + corrdinateChangePrevious[0])/2),int((corrdinateChange[1] + corrdinateChangePrevious[1])/2)))
+        # show found solution
+        #plt.imshow(texture_filtered_SolutionCandidate)
+        # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
+        #plt.show()
 
         xSolution, ySolution = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1] + gaussBorder, yEyeCenter - first_EyeRadius + plus_divergent +  + gaussBorder + averageLoc[0]
+
+        xSolution = xSolution + finalCorrdinateChange[1]
+        ySolution = ySolution + finalCorrdinateChange[0]
 
         # solutionInEye = tuple((first_EyeRadius + (ySolution - yEyeCenter), first_EyeRadius + (xSolution - xEyeCenter)))
         # xSolution, ySolution = xSolution + corrdinateChange[1], ySolution + corrdinateChange[0]
 
+        ######
+        # store previous patches
+        previous_texture_patch_gen3 = previous_texture_patch_gen2
+        previous_texture_patch_gen2 = previous_texture_patch
+        previous_texture_patch = new_texture_patch
+        # end store previous patches
+        #######
 
     else: # is first image set sliding window the ground variables
         texture_patch = new_texture_patch
         first_texture_patch = new_texture_patch
+        previous_texture_patch_gen3 = new_texture_patch
         previous_texture_patch_gen2 = new_texture_patch
-        previous_texture_patch_gen1 = new_texture_patch
         previous_texture_patch = new_texture_patch
 
     # end match the texture_patch to the selected time_difference_texture_img
@@ -328,9 +371,16 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # plt.imshow(gaussfilter) # show the used gaussfilter on the patch for this iteration
     plt.imshow(time_difference_eye_texture_img) # show the eye texture used for match in this iteration
     plt.imshow(texture_patch) # show the patch used for match in this iteration
-    plt.scatter(x=[loc[1]], y=[loc[0]], c='b', s=10) # show the 1. found match
-    plt.scatter(x=[loc2[1]], y=[loc2[0]], c='#9929BD', s=10) # show the 1. found match
+    plt.scatter(x=[locNew[1]], y=[locNew[0]], c='b', s=10) # show the 1. found match
+    # plt.scatter(x=[locGen1[1]], y=[locGen1[0]], c='#9929BD', s=10) # show the 1. found match
+    # plt.scatter(x=[locGen2[1]], y=[locGen2[0]], c='#EDB205', s=10)  # show the 1. found match
+    # plt.scatter(x=[locGen3[1]], y=[locGen3[0]], c='#06DEE4', s=10)  # show the 1. found match
     plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='r', s=10) # show the average of the found matches
+
+    xLoc = averageLoc[1] - corrdinateChange[1]
+    yLoc = averageLoc[0] - corrdinateChange[0]
+    plt.scatter(x=[xLoc], y=[yLoc], c='#06DEE4', s=10) # show the average of the found matches
+
     plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='g', s=10) # show the previous solution
 
 
