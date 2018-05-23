@@ -34,7 +34,7 @@ filter_size = 41 # must be an uneven number!
 filter_half_size = int((filter_size - 1) / 2)
 
 # loading images
-dataset = 1  # 1 is a, 0 is b
+dataset = 0  # 1 is a, 0 is b
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -129,30 +129,30 @@ b.close()
 
 
 
-# ERROR ANALYSIS -------------------------------------------------------------------------------------------------------
-# a
-# ------------------------------------------------------------------------------------------------------------------
-# if the correlation is below 0.8, use the patch from before image
-# coordmax_list[41] # what's 41 here is 42 in i
-patch = coordmax_list[44][3]
-# plt.imshow(cpatch)
-curr_img = coordmax_list[44][4]
-curr_oimg = coordmax_list[44][5]
-ocorr = coordmax_list[44][6]
-oloc = tuple((np.where(ocorr == np.max(ocorr))[0][0], np.where(ocorr == np.max(ocorr))[1][0]))
-corr = match_template(curr_img, patch, pad_input=True)
-ccorr = match_template(curr_oimg, cpatch, pad_input=True)
-np.max(ccorr)
-loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
-cloc = tuple((np.where(ccorr == np.max(ccorr))[0][0], np.where(ccorr == np.max(ccorr))[1][0]))
-
-plt.imshow(curr_oimg)
-plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
-plt.scatter(x=[oloc[1]], y=[oloc[0]], c='g', s=10)
-plt.scatter(x=[cloc[1]], y=[cloc[0]], c='y', s=10)
-
-
-
-# idea : always check with original template. minimal match must be.
-# --> drawback: which treshold to use?
-# result : ?
+# # ERROR ANALYSIS -------------------------------------------------------------------------------------------------------
+# # a
+# # ------------------------------------------------------------------------------------------------------------------
+# # if the correlation is below 0.8, use the patch from before image
+# # coordmax_list[41] # what's 41 here is 42 in i
+# patch = coordmax_list[44][3]
+# # plt.imshow(cpatch)
+# curr_img = coordmax_list[44][4]
+# curr_oimg = coordmax_list[44][5]
+# ocorr = coordmax_list[44][6]
+# oloc = tuple((np.where(ocorr == np.max(ocorr))[0][0], np.where(ocorr == np.max(ocorr))[1][0]))
+# corr = match_template(curr_img, patch, pad_input=True)
+# ccorr = match_template(curr_oimg, cpatch, pad_input=True)
+# np.max(ccorr)
+# loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
+# cloc = tuple((np.where(ccorr == np.max(ccorr))[0][0], np.where(ccorr == np.max(ccorr))[1][0]))
+#
+# plt.imshow(curr_oimg)
+# plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
+# plt.scatter(x=[oloc[1]], y=[oloc[0]], c='g', s=10)
+# plt.scatter(x=[cloc[1]], y=[cloc[0]], c='y', s=10)
+#
+#
+#
+# # idea : always check with original template. minimal match must be.
+# # --> drawback: which treshold to use?
+# # result : ?
