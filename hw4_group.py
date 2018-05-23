@@ -102,7 +102,6 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     origImage = plt.imread(filepath)
     hist, bins = np.histogram(origImage.ravel(), 256, [0, 256], density=True)
 
-
     # ##################
     # Color or Grayscale
     # ##################
@@ -143,7 +142,6 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
     print(st)
-
     # ##################
     # show a line at the calculated RANSAC
     # ##################
@@ -165,7 +163,6 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     # plt.imshow(image)
     # end the current image
     # ##################
-
     first_EyeRadius = first_xEyeSize
     square = int(first_xEyeSize / 2) + 26
     h, w = square, square
@@ -217,14 +214,12 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         eye_texture_img = eye_texture_img * eye_gaussfilter
         # end create eye_gaussfilter around the previous xySolution
         # ##################
-
         texture_filtered = texture_img * gaussfilter
     else : # color approach not working anymore at the moment
         texture_img = image[ySolution - h + plus_divergent:ySolution + h + plus_divergent,xSolution - w + plus_divergent:xSolution + w + plus_divergent, :]
         texture_filtered = texture_img * gaussfilter
     # pick a texture_img around the previous xySolution
     ######
-
     #####
     # default eye_texture_img
     if previous_eye_texture_img is None:
