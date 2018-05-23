@@ -35,7 +35,7 @@ filter_half_size = int((filter_size - 1) / 2)
 tolerance_dark = 0.25
 
 # loading images
-dataset = 1  # 1 is a, 0 is b
+dataset = 0  # 1 is a, 0 is b
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
