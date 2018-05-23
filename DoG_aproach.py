@@ -32,9 +32,10 @@ from toolsHW4 import *
 sigma = 70
 filter_size = 41 # must be an uneven number!
 filter_half_size = int((filter_size - 1) / 2)
+tolerance_dark = 0.25
 
 # loading images
-dataset = 0  # 1 is a, 0 is b
+dataset = 1  # 1 is a, 0 is b
 if dataset == 1:
     folder = 'project_data/a/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -71,10 +72,14 @@ img = oimg[:, :, find_dominant_channel(oimg)[0]]
 img_1 = gconv(img, sigma, filter_size)
 img_1 = img_1[filter_half_size:-filter_half_size, filter_half_size:-filter_half_size]
 img = img - img_1
+# normalize the image values between 0 and 1
+img = (img - np.min(img)) / (np.max(img) - np.min(img))
 # take out the padding
 patch = img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
-# opatch = np.copy(patch)
+opatch = np.copy(patch) # save the first patch
 cpatch = oimg[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
+# # define antipatch which is just black
+# antipatch = np.zeros((2*patch_half_size, 2*patch_half_size))
 # timestamp start
 ts1 = time.time()
 st = datetime.datetime.fromtimestamp(ts1).strftime('%Y-%m-%d %H:%M:%S')
@@ -84,27 +89,46 @@ print(st)
 coordmax_list = list()
 # list of resulting images
 resimg_list = list()
+
 for i in filenames[1:]:
     curr_oimg = plt.imread(os.path.join(folder, i))
     curr_img = curr_oimg[:, :, find_dominant_channel(curr_oimg)[0]]
     curr_img_1 = gconv(curr_img, sigma, filter_size)
     curr_img_1 = curr_img_1[filter_half_size:-filter_half_size, filter_half_size:-filter_half_size]
     curr_img = curr_img - curr_img_1
+    # normalize the image values between 0 and 1
+    curr_img = (curr_img - np.min(curr_img)) / (np.max(curr_img) - np.min(curr_img))
     corr = match_template(curr_img, patch, pad_input=True)
-    col = 'r' # this match gives a red point in the resulting image
-    if np.max(corr) < 0.8:
-        print(i, "correlation lower than 0.8")
+    col = 'r'  # this match gives a red point in the resulting image
+    # check if the patch is too dark (too close to 0) and could be from the surrounding black area
+    if np.isclose(0, np.median(curr_cpatch), atol=tolerance_dark):
+        # the median value is too close to 0. This could be a dark patch
+        print(i, "the patch is considered to be too dark")
+        max_corr = 0
+    else:
+        max_corr = np.max(corr)
+    if max_corr < 0.8:
+        # the template does not match good enough
         # match with color patch from first image
         ccorr = match_template(curr_oimg, cpatch, pad_input=True)
         max_ccorr = np.max(ccorr)
-        if max_ccorr > np.max(corr) :
+        # matchwith DoG patch from first image
+        ocorr = match_template(curr_img, opatch, pad_input=True)
+        max_ocorr = np.max(ocorr)
+        if max_ccorr > max_ocorr:
             # if max of ccorr is higher than the one of corr, use ccorr to find location
-            print("replace match with DoG with match with original color image")
+            print(i, "replace DoG match with a match to original color image template")
             loc = tuple((np.where(ccorr == np.max(ccorr))[0][0], np.where(ccorr == np.max(ccorr))[1][0]))
             # make yellow dot in resulting image
             col = 'y'
         else:
-            loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
+            # take ocorr
+            print(i, "ocorr taken (match with original DoG image template)")
+            loc = tuple((np.where(ocorr == np.max(ocorr))[0][0], np.where(ocorr == np.max(ocorr))[1][0]))
+            col = 'g'
+    else:
+        # the matching is over 0.8
+        loc = tuple((np.where(corr == np.max(corr))[0][0], np.where(corr == np.max(corr))[1][0]))
     # ocorr = match_template(curr_img, opatch, pad_input=True)
     coordmax_list.append((loc, i, np.max(corr), patch, curr_img, curr_oimg))
     plt.imshow(curr_oimg)
@@ -113,7 +137,7 @@ for i in filenames[1:]:
 
     plt.clf()
     patch = curr_img[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
-
+    curr_cpatch = curr_oimg[(loc[0] - patch_half_size):(loc[0] + patch_half_size), (loc[1] - patch_half_size):(loc[1] + patch_half_size)]
 # timestamp stop
 sys.stdout.write('\r')
 ts = time.time()
@@ -126,20 +150,17 @@ a.writerows(coordmax_list)
 b.close()
 
 
-
-
-
 # # ERROR ANALYSIS -------------------------------------------------------------------------------------------------------
 # # a
 # # ------------------------------------------------------------------------------------------------------------------
 # # if the correlation is below 0.8, use the patch from before image
 # # coordmax_list[41] # what's 41 here is 42 in i
-# patch = coordmax_list[44][3]
+# patch = coordmax_list[60][3]
 # # plt.imshow(cpatch)
-# curr_img = coordmax_list[44][4]
-# curr_oimg = coordmax_list[44][5]
-# ocorr = coordmax_list[44][6]
-# oloc = tuple((np.where(ocorr == np.max(ocorr))[0][0], np.where(ocorr == np.max(ocorr))[1][0]))
+# curr_img = coordmax_list[62][4]
+# curr_oimg = coordmax_list[62][5]
+# #ocorr = coordmax_list[62][6]
+# #oloc = tuple((np.where(ocorr == np.max(ocorr))[0][0], np.where(ocorr == np.max(ocorr))[1][0]))
 # corr = match_template(curr_img, patch, pad_input=True)
 # ccorr = match_template(curr_oimg, cpatch, pad_input=True)
 # np.max(ccorr)
@@ -150,9 +171,3 @@ b.close()
 # plt.scatter(x=[loc[1]], y=[loc[0]], c='r', s=10)
 # plt.scatter(x=[oloc[1]], y=[oloc[0]], c='g', s=10)
 # plt.scatter(x=[cloc[1]], y=[cloc[0]], c='y', s=10)
-#
-#
-#
-# # idea : always check with original template. minimal match must be.
-# # --> drawback: which treshold to use?
-# # result : ?
