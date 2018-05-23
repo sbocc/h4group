@@ -272,6 +272,27 @@ def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_
 # EXERCISE 4.1 #
 ################
 
+def mirrorTextureAt45Degree(texture, dominant_channel = -1):
+    if dominant_channel > -1:
+        tex_rows, tex_cols = np.shape(texture)
+    else:
+        tex_rows, tex_cols, tex_bands = np.shape(texture)
+
+    assert tex_rows > 0 and tex_cols > 0 and tex_rows == tex_cols, "texture is not a square"
+
+    rotatedTexture = texture.copy() # np.zeros((tex_rows, tex_cols))
+
+    # print("ssd:"+str(ssd))
+    # for ind, value in np.ndenumerate(rotatedTexture):
+    #
+    # ADD YOUR CODE HERE
+    #
+    for i in range(tex_rows):
+        for j in range(tex_cols):
+            rotatedTexture[i, j] = rotatedTexture[i, j] + texture[j,i]
+
+    return rotatedTexture
+
 def rotateTexture90(texture, dominant_channel = -1):
     if dominant_channel > -1:
         tex_rows, tex_cols = np.shape(texture)

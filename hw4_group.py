@@ -21,9 +21,12 @@ from skimage.feature import match_template
 ##############################################################################
 
 dataset = 1
+saveEyeTexture = 1
+
 if dataset == 1:
     #filename = 'project_data/a/000224.png'
     folder = 'project_data/a/'
+    folderEye = 'project_data/a_eye/'
     newfolder = 'project_data/a_solution/'
     edgefolder = 'project_data/a_edges/'
     xFirstSolution, yFirstSolution = 348, 191
@@ -31,6 +34,7 @@ if dataset == 1:
 else:
     #filename = 'project_data/b/001319.png'
     folder = 'project_data/b/'
+    folderEye = 'project_data/b_eye/'
     newfolder = 'project_data/b_solution/'
     edgefolder = 'project_data/b_edges/'
     xFirstSolution, yFirstSolution = 439, 272
@@ -93,6 +97,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     filepath = os.path.join(folder,filename)
     newfilepath = os.path.join(newfolder, newfilename)
     edgefilepath = os.path.join(edgefolder, filename)
+    eyefilepath = os.path.join(folderEye, filename)
 
     origImage = plt.imread(filepath)
     hist, bins = np.histogram(origImage.ravel(), 256, [0, 256], density=True)
@@ -168,6 +173,9 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     eye_gaussfilter = gauss2d(square, filter_size= first_EyeRadius * 2 + 1)
     gaussfilter = gauss2d(square, filter_size= square * 2 + 1)
 
+    nonGaussfilter = np.zeros((square * 2 + 1, square * 2 + 1))
+    nonGaussfilter[nonGaussfilter == 0] = 1
+
     # ##################
     # pick a texture_img around the previous xySolution
     # ##################
@@ -186,19 +194,25 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         filterShape = np.shape(gaussfilter)
         eyefilterShape = np.shape(eye_gaussfilter)
 
-        gaussBorder = 0
-        maxRangeX = square * 2 - gaussBorder * 2
-        maxRangeY = square * 2 - gaussBorder * 2
+        maxRangeX = filterShape[1] #square * 2 * 2
+        maxRangeY = filterShape[0] #square * 2 * 2
 
-        if solutionInEye[0] - h + gaussBorder + maxRangeY >= eyefilterShape[0]:
-            maxRangeY = maxRangeY - (solutionInEye[0] - h + gaussBorder + maxRangeY - eyefilterShape[0])
+        startIndexX = w
+        startIndexY = h
 
-        if solutionInEye[1] - w + gaussBorder + maxRangeX >= eyefilterShape[1]:
-            maxRangeX = maxRangeX - (solutionInEye[1] - h + gaussBorder + maxRangeX - eyefilterShape[1])
+        usedGaussfilter = gaussfilter
+
+        if solutionInEye[0] +  h + 1 > eyefilterShape[0]:
+            startIndexY = (solutionInEye[0] +  h + 1 - eyefilterShape[0]) + h
+            usedGaussfilter = nonGaussfilter
+
+        if solutionInEye[1] + w + 1 > eyefilterShape[1]:
+            startIndexX = (solutionInEye[1] +  w + 1 - eyefilterShape[1]) + w
+            usedGaussfilter = nonGaussfilter
 
         for indexX in range(maxRangeX):
             for indexY in range(maxRangeY):
-                eye_gaussfilter[solutionInEye[0] - h + gaussBorder + indexY][solutionInEye[1] - w + gaussBorder + indexX] = gaussfilter[indexX + gaussBorder][indexY + gaussBorder]
+                eye_gaussfilter[solutionInEye[0] - startIndexY + indexY][solutionInEye[1] - startIndexX + indexX] = gaussfilter[indexX][indexY]
 
         eye_texture_img = eye_texture_img * eye_gaussfilter
         # end create eye_gaussfilter around the previous xySolution
@@ -260,8 +274,12 @@ for index, filename in enumerate(filenames): # loop through all images in folder
 
     ######
     # show found solution
-    # plt.imshow(time_difference_eye_texture_img)
-    # plt.show()
+    if saveEyeTexture == 1:
+        #eye_texture_img = mirrorTextureAt45Degree(eye_texture_img, dominant_channel = dominant_channel)
+        #plt.imshow(DoG(eye_texture_img,sigma_1,sigma_2,filter_size,"same"))
+        plt.imshow(eye_texture_img)
+        f2.show()
+        f2.savefig(eyefilepath, dpi=90, bbox_inches='tight')
 
     time_difference_eye_texture_img = eye_texture_img * eye_gaussfilter * -1 # (eye_texture_img - previous_eye_texture_img) * eye_gaussfilter
 
@@ -329,7 +347,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
 
         ######
         # tryied to calculate the difference between new average and previous patch
-        xFirstSolutionCandidate, yFirstSolutionCandidate = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1] + gaussBorder, yEyeCenter - first_EyeRadius + plus_divergent +  + gaussBorder + averageLoc[0]
+        xFirstSolutionCandidate, yFirstSolutionCandidate = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1], yEyeCenter - first_EyeRadius + plus_divergent + averageLoc[0]
 
         texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate + plus_divergent - h:yFirstSolutionCandidate + h + plus_divergent + 1,
                       xFirstSolutionCandidate - w + plus_divergent:xFirstSolutionCandidate + w + plus_divergent + 1] # * gaussfilter * -1
@@ -351,7 +369,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
         #plt.show()
 
-        xSolution, ySolution = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1] + gaussBorder, yEyeCenter - first_EyeRadius + plus_divergent +  + gaussBorder + averageLoc[0]
+        xSolution, ySolution = xEyeCenter - first_EyeRadius + plus_divergent + averageLoc[1], yEyeCenter - first_EyeRadius + plus_divergent + averageLoc[0]
 
         xSolution = xSolution + finalCorrdinateChange[1]
         ySolution = ySolution + finalCorrdinateChange[0]

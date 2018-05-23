@@ -117,7 +117,7 @@ def gconv(image, sigma, filter_size, mode='full'):
 
     return img_filtered
 
-def DoG(img, sigma_1, sigma_2, filter_size):
+def DoG(img, sigma_1, sigma_2, filter_size, mode='full'):
     # Function that creates Difference of Gaussians (DoG) for given standard
     # deviations and filter size
     # INPUTS
@@ -130,8 +130,8 @@ def DoG(img, sigma_1, sigma_2, filter_size):
     # @ dog           : Difference of Gaussians of size
     #                   (M+filter_size-1)x(N_filter_size-1)
 
-    img_f1 = gconv(img, sigma_1, filter_size)
-    img_f2 = gconv(img, sigma_2, filter_size)
+    img_f1 = gconv(img, sigma_1, filter_size, mode= mode)
+    img_f2 = gconv(img, sigma_2, filter_size, mode= mode)
     dog = img_f1 - img_f2
     
     return dog 
