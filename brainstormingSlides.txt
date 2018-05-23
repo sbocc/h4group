@@ -1,0 +1,29 @@
+Correlation implement
+
+
+Slide
+
+Brain
+
+
+
+
+1. detection of dominant color
+2. eye stabilisation - video - 
+3. image match 
+- to first patch
+- to current patch
+- to previous patch gen 1 gen 2 gen 3
+
+-> candidate
+4. correlation 
+- correlation
+- matching image patches and reajust candidate 
+-> video a und b vom result
+
+5. other Non optimal Approaches we tried
+
+-
+-
+-
+-
