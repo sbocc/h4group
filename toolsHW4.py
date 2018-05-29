@@ -223,7 +223,9 @@ def detecingEyeCenterAndSize(image, threshold = 0.4): # edges,
 
 def performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio):
     # perform RANSAC iterations
-    global model_c
+    model_m = 0
+    model_c = 0
+    # global model_m, model_c
     for it in range(ransac_iterations):
 
         # this shows progress
@@ -380,3 +382,48 @@ def match_texture_patch(new_texture_patch,previous_texture_patch):
     # print("newlocation is x:"+str(loc[1]-shapeCenterX)+" y:"+str(loc[0]-shapeCenterY))
 
     return tuple((loc[0] - shapeCenterY, loc[1] - shapeCenterX))
+
+def calculate_RANSAC_onEye(eyeImg):
+    edges = feature.canny(eyeImg, sigma=1.5, low_threshold=None, high_threshold=None, mask=None, use_quantiles=False)
+    # edges = edge_map(eyeImg)
+
+    plt.subplot(1,1,1)
+    plt.imshow(edges)
+    plt.show()
+
+    #f1 = plt.figure()
+    #plt.imshow(edges)
+    #f1.show()
+
+    edge_pts = np.array(np.nonzero(edges), dtype=float).T
+    edge_pts_xy = edge_pts[:, ::-1]
+
+    ransac_iterations = 50
+    ransac_threshold = 2
+    n_samples = 2
+
+    ratio = 0
+
+    # ##################
+    # calculate RANSAC
+    # ##################
+    model_m, model_c = performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio)
+    m = model_m
+    c = model_c
+    # end calculate RANSAC
+    # ##################
+
+    x = np.arange(eyeImg.shape[1])
+    y = model_m * x + model_c
+
+    f2 = plt.figure()
+
+    if m != 0 or c != 0:
+        plt.plot(x, y, 'r')
+    plt.imshow(eyeImg)
+
+    f2.show()
+
+    plt.show()
+
+    return eyeImg
