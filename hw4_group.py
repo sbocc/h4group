@@ -32,11 +32,11 @@ for dataset in range(2):
     saveEyeTexture = 1
 
     if dataset == 1:
-        #filename = 'project_data/a/000224.png'
         folder = 'project_data/a/'
         folderEye = 'project_data/a_eye/'
-        newfolder = 'project_data/a_solution/'
-        #edgefolder = 'project_data/a_edges/'
+        newfolder = 'solution_a/'
+        solutionFilefolder = ''
+        solutionFileName = 'solution_a'
         xFirstSolution, yFirstSolution = 348, 191
         eye_detect_threshold = 0.4
         use_DoG = 1
@@ -44,11 +44,11 @@ for dataset in range(2):
         use_contrast_correction = 1
         use_gaussfilter_around_around_solution = 1
     else:
-        #filename = 'project_data/b/001319.png'
         folder = 'project_data/b/'
         folderEye = 'project_data/b_eye/'
-        newfolder = 'project_data/b_solution/'
-        #edgefolder = 'project_data/b_edges/'
+        newfolder = 'solution_b/'
+        solutionFilefolder = ''
+        solutionFileName = 'solution_b'
         xFirstSolution, yFirstSolution = 439, 272
         eye_detect_threshold = 0.2
         use_DoG = 0
@@ -56,10 +56,8 @@ for dataset in range(2):
         use_contrast_correction = 1
         use_gaussfilter_around_around_solution = 1
 
-
     os.makedirs(folderEye, exist_ok=True)
     os.makedirs(newfolder, exist_ok=True)
-    #os.makedirs(edgefolder, exist_ok=True)
 
     xySolutions = []
     corrNew = []
@@ -103,6 +101,7 @@ for dataset in range(2):
 
     xSolution, ySolution = xFirstSolution , yFirstSolution
     previous_xSolution, previous_ySolution = xFirstSolution, yFirstSolution
+
     # Load the images and sort the paths to the sequenced names
     filenames = imagesfilename_from_folder(folder)
     filenames = np.sort(filenames)
@@ -124,9 +123,6 @@ for dataset in range(2):
 
         origImage = plt.imread(filepath)
         hist, bins = np.histogram(origImage.ravel(), 256, [0, 256], density=True)
-
-        # tried to bilateralFilter first but hat no deacent result
-        # origImage = cv2.bilateralFilter(origImage, 9, 75, 75)
 
         # ##################
         # Color or Grayscale
@@ -159,7 +155,7 @@ for dataset in range(2):
         # ##################
 
         # ##################
-        # calculate RANSAC
+        # tried calculate RANSAC in a first attempt
         # ##################
         # model_m, model_c = performRANSAC(edge_pts, edge_pts_xy, ransac_iterations, ransac_threshold, n_samples, ratio)
         #
@@ -168,10 +164,6 @@ for dataset in range(2):
         # end calculate RANSAC
         # ##################
 
-        sys.stdout.write('\r')
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        print(st)
         # ##################
         # show a line at the calculated RANSAC
         # ##################
@@ -185,6 +177,11 @@ for dataset in range(2):
         # end show a line at the calculated RANSAC
         # ##################
 
+        sys.stdout.write('\r')
+        ts = time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        print(st)
+
         f2 = plt.figure()
 
         # ##################
@@ -193,6 +190,7 @@ for dataset in range(2):
         # plt.imshow(image)
         # end the current image
         # ##################
+
         first_EyeRadius = first_xEyeSize
         square = int(first_xEyeSize / 2) + 26
         h, w = square, square
@@ -224,8 +222,8 @@ for dataset in range(2):
                 filterShape = np.shape(gaussfilter)
                 eyefilterShape = np.shape(eye_gaussfilter)
 
-                maxRangeX = filterShape[1] #square * 2 * 2
-                maxRangeY = filterShape[0] #square * 2 * 2
+                maxRangeX = filterShape[1]
+                maxRangeY = filterShape[0]
 
                 startIndexX = w
                 startIndexY = h
@@ -243,6 +241,9 @@ for dataset in range(2):
                 for indexX in range(maxRangeX):
                     for indexY in range(maxRangeY):
                         eye_gaussfilter[solutionInEye[0] - startIndexY + indexY][solutionInEye[1] - startIndexX + indexX] = gaussfilter[indexX][indexY]
+
+            # end create eye_gaussfilter around the previous xySolution
+            # ##################
 
             if use_sharpener == 1:
                 sharp = np.asarray([0, 0, 0, 0, 4, 0, 0, 0, 0]).reshape((1, 9))
@@ -264,15 +265,14 @@ for dataset in range(2):
 
             texture_img = eye_texture_img[solutionInEye[0] - h:solutionInEye[0] + h + 1, solutionInEye[1] - w:solutionInEye[1] + w + 1]
 
-
-            # end create eye_gaussfilter around the previous xySolution
-            # ##################
             texture_filtered = texture_img # * gaussfilter
-        else : # color approach not working anymore at the moment
+        else :
+            # color approach not working anymore at the moment
             texture_img = image[ySolution - h:ySolution + h,xSolution - w:xSolution + w, :]
             texture_filtered = texture_img * gaussfilter
-        # pick a texture_img around the previous xySolution
-        ######
+            # pick a texture_img around the previous xySolution
+            ######
+
         #####
         # default eye_texture_img
         if previous_eye_texture_img is None:
@@ -280,9 +280,11 @@ for dataset in range(2):
         # end default eye_texture_img
         ######
 
-        #img_f1 = gconv(eye_texture_img, sigma_1, filter_size, mode='same')
-        #img_f2 = gconv(previous_eye_texture_img, sigma_2, filter_size, mode='same')
-        #time_difference_eye_texture_img = (img_f1 - img_f2)
+        # ##################
+        # tried create a time_difference_eye_texture_img out of convolutions
+        # img_f1 = gconv(eye_texture_img, sigma_1, filter_size, mode='same')
+        # img_f2 = gconv(previous_eye_texture_img, sigma_2, filter_size, mode='same')
+        # time_difference_eye_texture_img = (img_f1 - img_f2)
 
         # texture_filtered = image[solutionInEye[0] - h:solutionInEye[0] + h + 1,solutionInEye[1] - w:solutionInEye[1] + w + 1]
 
@@ -303,7 +305,7 @@ for dataset in range(2):
         # ##################
 
         # ##################
-        #  tried to useTimeDifference Patch
+        # tried to useTimeDifference Patch
         # useTimeDifferenceInPatch = 0
         # if useTimeDifferenceInPatch == 1:
         #     time_difference_texture_img = texture_filtered - previous_texture_img
@@ -320,15 +322,23 @@ for dataset in range(2):
         # end tried to min out the extrem lights
         # ##################
 
+        # ##################
+        # tried calculate RANSAC only on the detected Eye
         # calculate_RANSAC_onEye(eye_texture_img)
 
         ######
-        # show found solution
+        # store detected Eye with last Solution
         if saveEyeTexture == 1:
-            #eye_texture_img = mirrorTextureAt45Degree(eye_texture_img, dominant_channel = dominant_channel)
-            #plt.imshow(DoG(eye_texture_img,sigma_1,sigma_2,filter_size,"same"))
+            # ##################
+            # tried mirroring effects to better detect
+            # eye_texture_img = mirrorTextureAt45Degree(eye_texture_img, dominant_channel = dominant_channel)
+
+            # ##################
+            # tried DoG on Eye to better detect
+            # plt.imshow(DoG(eye_texture_img,sigma_1,sigma_2,filter_size,"same"))
+
             plt.imshow(eye_texture_img)
-            plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='r', s=10)  # show the average of the found matches
+            # plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='r', s=10)  # show the average of the found matches
             f2.show()
             f2.savefig(eyefilepath, dpi=90, bbox_inches='tight')
 
@@ -359,11 +369,8 @@ for dataset in range(2):
             # print("corrdinateChange: " + str(corrdinateChange))
 
             ######
-            # tryied to use different variation of new and old patches as the finally used for this iteration
+            # tryied to use different variation of new and old patches as the finally used for this or next iteration
             texture_patch = new_texture_patch # previous_texture_patch # new_texture_patch # (new_texture_patch + previous_texture_patch) / 2
-            #corrdinateChangeMatch = match_texture_patch(new_texture_patch, texture_patch)
-            #print("corrdinateChangeMatch: " + str(corrdinateChangeMatch))
-
             # end calculate of the patch finally used for this iteration
             ######
 
@@ -385,7 +392,6 @@ for dataset in range(2):
             corrGen2 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen2, pad_input=True)
             locGen2 = tuple((np.where(corrGen2 == np.max(corrGen2))[0][0], np.where(corrGen2 == np.max(corrGen2))[1][0]))
             diffToGen2 = tuple((locGen2[0] - locGen1[0], locGen2[1] - locGen1[1]))
-
             #corrGen2Max = np.max(corrGen2)
 
             corrGen3 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen3, pad_input=True)
@@ -398,8 +404,10 @@ for dataset in range(2):
             #corrFirstMax = np.max(corrFirst)
             diffToFirst = tuple((locFirst[0] - locGen1[0], locFirst[1] - locGen1[1]))
 
+            ######
+            # tryied to use only the best match from last 3 gen
             #corrNew = [corrNewMax,corrGen1Max,corrGen2Max,corrGen3Max,corrFirstMax]
-            print("diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
+            #print("diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
 
             #n = np.where(corrNew == np.max(corrNew))
             #print("n: " + str(n) + "corrNew: " + str(np.max(corrNew)) + "corrNewMax Pos: " + str(np.where(corrNew == np.max(corrNew))))
@@ -430,27 +438,30 @@ for dataset in range(2):
             texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate - h:yFirstSolutionCandidate + h + 1,
                           xFirstSolutionCandidate - w:xFirstSolutionCandidate + w + 1] # * gaussfilter * -1
 
-
+            ######
+            # tryied to use two gaussconvolutions to create a final texture
             #img_f1 = gconv(texture_filtered, sigma_1, filter_size)
             #img_f2 = gconv(texture_filtered_SolutionCandidate, sigma_2, filter_size)
             #texture_filtered_SolutionCandidate = img_f1 - img_f2
 
+            ######
+            # tryied to match texture_filtered_SolutionCandidate with the last 3 gen and take the average of the best two of three
             corrdinateChangeGen1 = match_texture_patch(previous_texture_patch, texture_filtered_SolutionCandidate )
+
             corrdinateChangeGen2 = match_texture_patch(previous_texture_patch_gen2, texture_filtered_SolutionCandidate )
             diffToGen2 = np.sqrt((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) ** 2)
-            corrdinateChangeGen3 = match_texture_patch(previous_texture_patch_gen3, texture_filtered_SolutionCandidate)
-            diffToGen3 = np.sqrt((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) ** 2 + (
-                    corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) ** 2)
-            # diffToGen3 = tuple((corrdinateChangeGen3[0] - corrdinateChangeGen1[0], corrdinateChangeGen3[1] - corrdinateChangeGen1[1]))
-            corrdinateChangeFirst = match_texture_patch(first_texture_patch, texture_filtered_SolutionCandidate )
-            # diffToFirst = tuple((corrdinateChangeFirst[0] - corrdinateChangeGen1[0], corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))
-            diffToFirst = np.sqrt((corrdinateChangeFirst[0] - corrdinateChangeGen1[0]) ** 2 + (
-                    corrdinateChangeFirst[1] - corrdinateChangeGen1[1]) ** 2)
 
+            corrdinateChangeGen3 = match_texture_patch(previous_texture_patch_gen3, texture_filtered_SolutionCandidate)
+            diffToGen3 = np.sqrt((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) ** 2)
+
+            corrdinateChangeFirst = match_texture_patch(first_texture_patch, texture_filtered_SolutionCandidate )
+            diffToFirst = np.sqrt((corrdinateChangeFirst[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]) ** 2)
+
+            ######
+            # take the average of the best two of three
             diffTo = [diffToGen2,diffToGen3,diffToFirst]
             n = np.where(diffTo == np.max(diffTo))[0][0]
-
-            print( ""+str(n)+"diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
+            # print( ""+str(n)+"diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
             if n == 0: # diffToGen2 is max take average of point diffToGen3 and diffToFirst
                 finalCorrdinateChangeY = int(((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) + (corrdinateChangeFirst[0] - corrdinateChangeGen1[0]))/2)
                 finalCorrdinateChangeX = int(((corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))/2)
@@ -460,26 +471,19 @@ for dataset in range(2):
             elif n == 2: # diffToFirst is max take average of point diffToGen2 and diffToGen3
                 finalCorrdinateChangeY = int(((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) + (corrdinateChangeGen3[0] - corrdinateChangeGen1[0]))/2)
                 finalCorrdinateChangeX = int(((corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]))/2)
-            #    averageLoc = tuple((np.where(corrGen2 == np.max(corrGen2))[0][0], np.where(corrGen2 == np.max(corrGen2))[1][0]))
-            # elif n == 3: # locGen3
-            #    averageLoc = tuple((np.where(corrGen3 == np.max(corrGen3))[0][0], np.where(corrGen3 == np.max(corrGen3))[1][0]))
-            # else: # locFirst
 
             finalCorrdinateChange = tuple((finalCorrdinateChangeY,finalCorrdinateChangeX))
             print("finalCorrdinateChange: " + str(finalCorrdinateChange))
-            #finalCorrdinateChange = corrdinateChangeGen1 # tuple((int((corrdinateChange[0] + corrdinateChangePrevious[0])/2),int((corrdinateChange[1] + corrdinateChangePrevious[1])/2)))
+
             # show found solution
-            #plt.imshow(texture_filtered_SolutionCandidate)
+            # plt.imshow(texture_filtered_SolutionCandidate)
             # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
-            #plt.show()
+            # plt.show()
 
             xSolution, ySolution = xEyeCenter - first_EyeRadius + averageLoc[1], yEyeCenter - first_EyeRadius + averageLoc[0]
 
             xSolution = xSolution + finalCorrdinateChange[1]
             ySolution = ySolution + finalCorrdinateChange[0]
-
-            # solutionInEye = tuple((first_EyeRadius + (ySolution - yEyeCenter), first_EyeRadius + (xSolution - xEyeCenter)))
-            # xSolution, ySolution = xSolution + corrdinateChange[1], ySolution + corrdinateChange[0]
 
             ######
             # store previous patches
@@ -598,7 +602,7 @@ for dataset in range(2):
         previous_texture_img = texture_img.copy()
         previous_eye_texture_img = eye_texture_img.copy()
 
-    b = open(newfolder+'solutions.csv', 'w')
+    b = open(solutionFilefolder+solutionFileName+'.csv', 'w')
     a = csv.writer(b)
     a.writerows(xySolutions)
     b.close()
