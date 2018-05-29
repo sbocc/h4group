@@ -20,7 +20,15 @@ from skimage.feature import match_template
 #                           Main script starts here                          #
 ##############################################################################
 
+
+# ##################
+# Select the Dataset to Calculate 1:Dataset a  0:Dataset b
+# ##################
 dataset = 1
+
+# ##################
+# Store the Detected Eye in an Image 1:Yes 0:No
+# ##################
 saveEyeTexture = 1
 
 if dataset == 1:
@@ -40,7 +48,12 @@ else:
     xFirstSolution, yFirstSolution = 439, 272
     threshold = 0.2
 
+os.makedirs(folderEye, exist_ok=True)
+os.makedirs(newfolder, exist_ok=True)
+os.makedirs(edgefolder, exist_ok=True)
+
 xySolutions = []
+corrNew = []
 
 ransac_iterations = 100
 ransac_threshold = 2
@@ -197,7 +210,7 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         startIndexX = w
         startIndexY = h
 
-        usedGaussfilter = gaussfilter
+        usedGaussfilter = nonGaussfilter # gaussfilter
 
         if solutionInEye[0] +  h + 1 > eyefilterShape[0]:
             startIndexY = (solutionInEye[0] +  h + 1 - eyefilterShape[0]) + h
@@ -312,6 +325,8 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         ######
 
         corrNew = match_template(time_difference_eye_texture_img, texture_patch, pad_input=True)
+        corrNewMax = np.max(corrNew)
+
         locNew = tuple((np.where(corrNew == np.max(corrNew))[0][0], np.where(corrNew == np.max(corrNew))[1][0]))
 
         ######
@@ -321,21 +336,44 @@ for index, filename in enumerate(filenames): # loop through all images in folder
         # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
         # plt.show()
 
-        #corrGen1 = match_template(time_difference_eye_texture_img, previous_texture_patch, pad_input=True)
+        corrGen1 = match_template(time_difference_eye_texture_img, previous_texture_patch, pad_input=True)
         #locGen1 = tuple((np.where(corrGen1 == np.max(corrGen1))[0][0], np.where(corrGen1 == np.max(corrGen1))[1][0]))
+        corrGen1Max = np.max(corrGen1)
 
-        #corrGen2 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen2, pad_input=True)
+        corrGen2 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen2, pad_input=True)
         #locGen2 = tuple((np.where(corrGen2 == np.max(corrGen2))[0][0], np.where(corrGen2 == np.max(corrGen2))[1][0]))
+        corrGen2Max = np.max(corrGen2)
 
-        #corrGen3 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen3, pad_input=True)
+        corrGen3 = match_template(time_difference_eye_texture_img, previous_texture_patch_gen3, pad_input=True)
         #locGen3 = tuple((np.where(corrGen3 == np.max(corrGen3))[0][0], np.where(corrGen3 == np.max(corrGen3))[1][0]))
+        corrGen3Max = np.max(corrGen3)
 
-        #corrFirst = match_template(time_difference_eye_texture_img, first_texture_patch, pad_input=True)
+
+        corrFirst = match_template(time_difference_eye_texture_img, first_texture_patch, pad_input=True)
         #locFirst = tuple((np.where(corrFirst == np.max(corrFirst))[0][0], np.where(corrFirst == np.max(corrFirst))[1][0]))
+        corrFirstMax = np.max(corrFirst)
+
+        corrNew = [corrNewMax,corrGen1Max,corrGen2Max,corrGen3Max,corrFirstMax]
+        #print("corrNewMax: " + str(corrNewMax) + " corrGen1Max: " + str(corrGen1Max) + " corrGen2Max: " + str(corrGen2Max) + " corrGen3Max: " + str(corrGen3Max) + " corrFirstMax: " + str(corrFirstMax))
+
+        n = np.where(corrNew == np.max(corrNew))
+        print("n: " + str(n) + "corrNew: " + str(np.max(corrNew)) + "corrNewMax Pos: " + str(np.where(corrNew == np.max(corrNew))))
+
+        averageLoc = locNew
+        if n == 0: # locNew
+            averageLoc = tuple((np.where(corrNew == np.max(corrNew))[0][0], np.where(corrNew == np.max(corrNew))[1][0]))
+        elif n == 1: # locGen1
+            averageLoc = tuple((np.where(corrGen1 == np.max(corrGen1))[0][0], np.where(corrGen1 == np.max(corrGen1))[1][0]))
+        elif n == 2: # locGen2
+            averageLoc = tuple((np.where(corrGen2 == np.max(corrGen2))[0][0], np.where(corrGen2 == np.max(corrGen2))[1][0]))
+        elif n == 3: # locGen3
+            averageLoc = tuple((np.where(corrGen3 == np.max(corrGen3))[0][0], np.where(corrGen3 == np.max(corrGen3))[1][0]))
+        else: # locFirst
+            averageLoc = tuple((np.where(corrFirst == np.max(corrFirst))[0][0], np.where(corrFirst == np.max(corrFirst))[1][0]))
 
         ######
         # tryied to use different variation of matches as final solution for this iteration
-        averageLoc = locNew
+        # averageLoc = locNew
         # averageLoc = tuple((int((locNew[0] + locGen1[0] + locGen2[0] + locGen3[0])/4), int((locNew[1] + locGen1[1] + locGen2[1] + locGen3[1])/4)))
 
         print("corrdinateChangeMatch: " + str(locNew) + " locGen1: " + str(locGen1) + " locGen2: " + str(locGen2) + " locGen3: " + str(locGen3) + " locFirst: " + str(locFirst) + " averageLoc: " + str(averageLoc))
@@ -398,9 +436,9 @@ for index, filename in enumerate(filenames): # loop through all images in folder
     plt.imshow(time_difference_eye_texture_img) # show the eye texture used for match in this iteration
     plt.imshow(texture_patch) # show the patch used for match in this iteration
     plt.scatter(x=[locNew[1]], y=[locNew[0]], c='b', s=10) # show the 1. found match
-    # plt.scatter(x=[locGen1[1]], y=[locGen1[0]], c='#9929BD', s=10) # show the 1. found match
-    # plt.scatter(x=[locGen2[1]], y=[locGen2[0]], c='#EDB205', s=10)  # show the 1. found match
-    # plt.scatter(x=[locGen3[1]], y=[locGen3[0]], c='#06DEE4', s=10)  # show the 1. found match
+    plt.scatter(x=[locGen1[1]], y=[locGen1[0]], c='#9929BD', s=10) # show the 1. found match
+    plt.scatter(x=[locGen2[1]], y=[locGen2[0]], c='#EDB205', s=10)  # show the 1. found match
+    plt.scatter(x=[locGen3[1]], y=[locGen3[0]], c='#06DEE4', s=10)  # show the 1. found match
     plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='r', s=10) # show the average of the found matches
 
     xLoc = averageLoc[1] - corrdinateChange[1]
