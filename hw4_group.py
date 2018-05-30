@@ -51,7 +51,7 @@ for dataset in range(2):
         solutionFileName = 'solution_b'
         xFirstSolution, yFirstSolution = 439, 272
         eye_detect_threshold = 0.2
-        use_DoG = 0
+        use_DoG = 1
         use_sharpener = 1
         use_contrast_correction = 1
         use_gaussfilter_around_solution = 1
@@ -435,55 +435,71 @@ for dataset in range(2):
             # tryied to calculate the difference between new average and previous patch
             xFirstSolutionCandidate, yFirstSolutionCandidate = xEyeCenter - first_EyeRadius + averageLoc[1], yEyeCenter - first_EyeRadius + averageLoc[0]
 
-            texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate - h:yFirstSolutionCandidate + h + 1,
-                          xFirstSolutionCandidate - w:xFirstSolutionCandidate + w + 1] # * gaussfilter * -1
+            for loop in range(2): # Optimize the candidate by match 3 times
+                # texture_filtered_SolutionCandidate = image[yFirstSolutionCandidate - h:yFirstSolutionCandidate + h + 1,xFirstSolutionCandidate - w:xFirstSolutionCandidate + w + 1]
 
-            ######
-            # tryied to use two gaussconvolutions to create a final texture
-            #img_f1 = gconv(texture_filtered, sigma_1, filter_size)
-            #img_f2 = gconv(texture_filtered_SolutionCandidate, sigma_2, filter_size)
-            #texture_filtered_SolutionCandidate = img_f1 - img_f2
+                texture_filtered_SolutionCandidate = time_difference_eye_texture_img[yFirstSolutionCandidate - yEyeCenter + first_EyeRadius - h:yFirstSolutionCandidate - yEyeCenter + first_EyeRadius + h + 1,
+                              xFirstSolutionCandidate - xEyeCenter + first_EyeRadius - w:xFirstSolutionCandidate - xEyeCenter + first_EyeRadius + w + 1]
+                ######
+                # show found solution
+                # plt.imshow(time_difference_eye_texture_img)
+                # plt.imshow(previous_texture_patch)
+                # plt.scatter(x=[locNew[1]], y=[locNew[0]], c='g', s=10)
+                # plt.show()
 
-            ######
-            # tryied to match texture_filtered_SolutionCandidate with the last 3 gen and take the average of the best two of three
-            corrdinateChangeGen1 = match_texture_patch(previous_texture_patch, texture_filtered_SolutionCandidate )
+                ######
+                # tryied to use two gaussconvolutions to create a final texture
+                #img_f1 = gconv(texture_filtered, sigma_1, filter_size)
+                #img_f2 = gconv(texture_filtered_SolutionCandidate, sigma_2, filter_size)
+                #texture_filtered_SolutionCandidate = img_f1 - img_f2
 
-            corrdinateChangeGen2 = match_texture_patch(previous_texture_patch_gen2, texture_filtered_SolutionCandidate )
-            diffToGen2 = np.sqrt((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) ** 2)
+                ######
+                # tryied to match texture_filtered_SolutionCandidate with the last 3 gen and take the average of the best two of three
+                corrdinateChangeGen1 = match_texture_patch(previous_texture_patch, texture_filtered_SolutionCandidate )
 
-            corrdinateChangeGen3 = match_texture_patch(previous_texture_patch_gen3, texture_filtered_SolutionCandidate)
-            diffToGen3 = np.sqrt((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) ** 2)
+                corrdinateChangeGen2 = match_texture_patch(previous_texture_patch_gen2, texture_filtered_SolutionCandidate )
+                diffToGen2 = np.sqrt((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) ** 2)
 
-            corrdinateChangeFirst = match_texture_patch(first_texture_patch, texture_filtered_SolutionCandidate )
-            diffToFirst = np.sqrt((corrdinateChangeFirst[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]) ** 2)
+                corrdinateChangeGen3 = match_texture_patch(previous_texture_patch_gen3, texture_filtered_SolutionCandidate)
+                diffToGen3 = np.sqrt((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) ** 2)
 
-            ######
-            # take the average of the best two of three
-            diffTo = [diffToGen2,diffToGen3,diffToFirst]
-            n = np.where(diffTo == np.max(diffTo))[0][0]
-            # print( ""+str(n)+"diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
-            if n == 0: # diffToGen2 is max take average of point diffToGen3 and diffToFirst
-                finalCorrdinateChangeY = int(((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) + (corrdinateChangeFirst[0] - corrdinateChangeGen1[0]))/2)
-                finalCorrdinateChangeX = int(((corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))/2)
-            elif n == 1: # diffToGen3 is max take average of point diffToGen2 and diffToFirst
-                finalCorrdinateChangeY = int(((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) + (corrdinateChangeFirst[0] - corrdinateChangeGen1[0]))/2)
-                finalCorrdinateChangeX = int(((corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))/2)
-            elif n == 2: # diffToFirst is max take average of point diffToGen2 and diffToGen3
-                finalCorrdinateChangeY = int(((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) + (corrdinateChangeGen3[0] - corrdinateChangeGen1[0]))/2)
-                finalCorrdinateChangeX = int(((corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]))/2)
+                corrdinateChangeFirst = match_texture_patch(first_texture_patch, texture_filtered_SolutionCandidate )
+                diffToFirst = np.sqrt((corrdinateChangeFirst[0] - corrdinateChangeGen1[0]) ** 2 + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]) ** 2)
 
-            finalCorrdinateChange = tuple((finalCorrdinateChangeY,finalCorrdinateChangeX))
-            print("finalCorrdinateChange: " + str(finalCorrdinateChange))
+                ######
+                # take the average of the best two of three
+                diffTo = [diffToGen2,diffToGen3,diffToFirst]
+                n = np.where(diffTo == np.max(diffTo))[0][0]
+                # print( ""+str(n)+"diffToGen2: " + str(diffToGen2) + " diffToGen3: " + str(diffToGen3) + " diffToFirst: " + str(diffToFirst))
+                if n == 0: # diffToGen2 is max take average of point diffToGen3 and diffToFirst
+                    finalCorrdinateChangeY = int(((corrdinateChangeGen3[0] - corrdinateChangeGen1[0]) + (corrdinateChangeFirst[0] - corrdinateChangeGen1[0]))/2)
+                    finalCorrdinateChangeX = int(((corrdinateChangeGen3[1] - corrdinateChangeGen1[1]) + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))/2)
+                elif n == 1: # diffToGen3 is max take average of point diffToGen2 and diffToFirst
+                    finalCorrdinateChangeY = int(((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) + (corrdinateChangeFirst[0] - corrdinateChangeGen1[0]))/2)
+                    finalCorrdinateChangeX = int(((corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) + (corrdinateChangeFirst[1] - corrdinateChangeGen1[1]))/2)
+                elif n == 2: # diffToFirst is max take average of point diffToGen2 and diffToGen3
+                    finalCorrdinateChangeY = int(((corrdinateChangeGen2[0] - corrdinateChangeGen1[0]) + (corrdinateChangeGen3[0] - corrdinateChangeGen1[0]))/2)
+                    finalCorrdinateChangeX = int(((corrdinateChangeGen2[1] - corrdinateChangeGen1[1]) + (corrdinateChangeGen3[1] - corrdinateChangeGen1[1]))/2)
 
-            # show found solution
-            # plt.imshow(texture_filtered_SolutionCandidate)
-            # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
-            # plt.show()
+                finalCorrdinateChange = tuple((finalCorrdinateChangeY,finalCorrdinateChangeX))
+                print("finalCorrdinateChange: " + str(finalCorrdinateChange))
+                print("xFirstSolutionCandidate: " + str(xFirstSolutionCandidate)+" yFirstSolutionCandidate: " + str(yFirstSolutionCandidate))
 
-            xSolution, ySolution = xEyeCenter - first_EyeRadius + averageLoc[1], yEyeCenter - first_EyeRadius + averageLoc[0]
+                # xFirstSolutionCandidate, yFirstSolutionCandidate =
 
-            xSolution = xSolution + finalCorrdinateChange[1]
-            ySolution = ySolution + finalCorrdinateChange[0]
+                # show found solution
+                # plt.imshow(texture_filtered_SolutionCandidate)
+                # plt.scatter(x=[loc[1]], y=[loc[0]], c='g', s=10)
+                # plt.show()
+
+                xSolution, ySolution = xEyeCenter - first_EyeRadius + averageLoc[1], yEyeCenter - first_EyeRadius + averageLoc[0]
+
+                xSolution = xSolution + finalCorrdinateChange[1]
+                ySolution = ySolution + finalCorrdinateChange[0]
+
+                xFirstSolutionCandidate, yFirstSolutionCandidate = xSolution, ySolution
+
+                print("xSolution: " + str(xSolution)+"ySolution: " + str(ySolution))
 
             ######
             # store previous patches
