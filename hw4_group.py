@@ -42,7 +42,7 @@ for dataset in range(2):
         use_DoG = 1
         use_sharpener = 1
         use_contrast_correction = 1
-        use_gaussfilter_around_around_solution = 1
+        use_gaussfilter_around_solution = 1
     else:
         folder = 'project_data/b/'
         folderEye = 'project_data/b_eye/'
@@ -54,7 +54,7 @@ for dataset in range(2):
         use_DoG = 0
         use_sharpener = 1
         use_contrast_correction = 1
-        use_gaussfilter_around_around_solution = 1
+        use_gaussfilter_around_solution = 1
 
     os.makedirs(folderEye, exist_ok=True)
     os.makedirs(newfolder, exist_ok=True)
@@ -85,13 +85,13 @@ for dataset in range(2):
     previous_texture_patch_gen3 = None
     first_texture_patch  = None
     corrdinateChange = tuple((0,0))
-    locNew = tuple((0,0))
-    locFirst = tuple((0,0))
-    locGen1 = tuple((0,0))
-    locGen2 = tuple((0,0))
-    locGen3 = tuple((0,0))
-    averageLoc = tuple((0,0))
-    solutionInEye = tuple((0,0))
+    locNew = tuple((1,1))
+    locFirst = tuple((1,1))
+    locGen1 = tuple((1,1))
+    locGen2 = tuple((1,1))
+    locGen3 = tuple((1,1))
+    averageLoc = tuple((1,1))
+    solutionInEye = tuple((1,1))
 
     sigma_1 = 1
     sigma_2 = 3
@@ -215,7 +215,7 @@ for dataset in range(2):
 
             # ##################
             # create eye_gaussfilter around the ≈ xySolution
-            if use_gaussfilter_around_around_solution == 1:
+            if use_gaussfilter_around_solution == 1:
                 eye_gaussfilter = np.zeros((first_EyeRadius * 2 + 1, first_EyeRadius * 2 + 1))
                 eye_gaussfilter[eye_gaussfilter == 0] = gaussfilter[0][0] # set at least the value of the lowest gaussfilter
 
@@ -337,7 +337,7 @@ for dataset in range(2):
             # tried DoG on Eye to better detect
             # plt.imshow(DoG(eye_texture_img,sigma_1,sigma_2,filter_size,"same"))
 
-            plt.imshow(eye_texture_img)
+            plt.imshow(eye_texture_origImg) # eye_texture_img black and white
             # plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='r', s=10)  # show the average of the found matches
             f2.show()
             f2.savefig(eyefilepath, dpi=90, bbox_inches='tight')
@@ -510,17 +510,20 @@ for dataset in range(2):
         # plt.imshow(gaussfilter) # show the used gaussfilter on the patch for this iteration
         plt.imshow(time_difference_eye_texture_img) # show the eye texture used for match in this iteration
         plt.imshow(texture_patch) # show the patch used for match in this iteration
-        plt.scatter(x=[locNew[1]], y=[locNew[0]], c='b', s=10) # show the 1. found match
-        plt.scatter(x=[locGen1[1]], y=[locGen1[0]], c='#9929BD', s=10) # show the 1. found match
+
+        plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='g', s=10)  # show the previous solution
+
+        # plt.scatter(x=[locNew[1]], y=[locNew[0]], c='b', s=10) # show the 1. found match
         plt.scatter(x=[locGen2[1]], y=[locGen2[0]], c='#EDB205', s=10)  # show the 1. found match
         plt.scatter(x=[locGen3[1]], y=[locGen3[0]], c='#06DEE4', s=10)  # show the 1. found match
-        plt.scatter(x=[averageLoc[1]], y=[averageLoc[0]], c='r', s=10) # show the average of the found matches
+        plt.scatter(x=[locFirst[1]], y=[locFirst[0]], c='b', s=10) # show the average of the found matches
 
-        xLoc = averageLoc[1] - corrdinateChange[1]
-        yLoc = averageLoc[0] - corrdinateChange[0]
-        plt.scatter(x=[xLoc], y=[yLoc], c='#06DEE4', s=10) # show the average of the found matches
+        plt.scatter(x=[locGen1[1]], y=[locGen1[0]], c='#9929BD', s=10)  # show the 1. found match
 
-        plt.scatter(x=[solutionInEye[1]], y=[solutionInEye[0]], c='g', s=10) # show the previous solution
+        # xLoc = averageLoc[1] - corrdinateChange[1]
+        # yLoc = averageLoc[0] - corrdinateChange[0]
+        plt.scatter(x=[xSolution], y=[ySolution], c='r', s=10) # show the average of the found matches
+
 
 
         # ##################
